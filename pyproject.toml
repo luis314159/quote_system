@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "quote-app"
+version = "0.1.0"
+description = ""
+authors = ["luis314159 <luis.14xbox@live.com.mx>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^5.1.5"
+uvicorn = "^0.34.0"
+trimesh = "^4.6.0"
+numpy = "^2.2.2"
+pandas = "^2.2.3"
+cascadio = "^0.0.15"
+scipy = "^1.15.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

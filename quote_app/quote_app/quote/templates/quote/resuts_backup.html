@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Analysis Results</h1>
+    
+    <!-- Material Summary Card -->
+    <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Volume Summary by Material</h2>
+        <div id="materialSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- JavaScript will populate this -->
+        </div>
+    </div>
+    
+    <!-- Components Table -->
+    <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+        <table class="min-w-full table-auto">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume (in³)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vertices</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faces</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Volume</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for item in table_data %}
+                <tr class="hover:bg-gray-50" data-row="{{ forloop.counter0 }}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.component }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {% if item.material == "Not specified" %}
+                        <select 
+                            class="material-select border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            data-row="{{ forloop.counter0 }}"
+                        >
+                            <option value="Not specified">Not specified</option>
+                            <option value="Acero inoxidable">Acero inoxidable</option>
+                            <option value="Acero al carbono">Acero al carbono</option>
+                        </select>
+                        {% else %}
+                        {{ item.material }}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.volume|floatformat:2 }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.vertices }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.faces }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <input type="number" 
+                               class="quantity-input border rounded px-2 py-1 text-sm w-20"
+                               value="{{ item.quantity }}"
+                               min="1"
+                               data-row="{{ forloop.counter0 }}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 total-volume-cell">
+                        <!-- JavaScript will calculate this -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Store the initial data in a JavaScript variable
+const tableData = {{ table_data|safe }};
+
+function calculateTotalVolume(volume, quantity) {
+    return (parseFloat(volume) * parseInt(quantity)).toFixed(2);
+}
+
+function updateMaterialSummary() {
+    const materialSummary = {};
+    let totalVolume = 0;
+
+    // Calculate volumes by material
+    tableData.forEach(item => {
+        const totalVolumeForItem = parseFloat(calculateTotalVolume(item.volume, item.quantity));
+        if (!materialSummary[item.material]) {
+            materialSummary[item.material] = 0;
+        }
+        materialSummary[item.material] += totalVolumeForItem;
+        totalVolume += totalVolumeForItem;
+    });
+
+    // Update the summary display
+    const summaryHtml = Object.entries(materialSummary).map(([material, volume]) => `
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="font-medium text-gray-700">${material}</h3>
+            <p class="text-2xl font-bold text-blue-600">${volume.toFixed(2)} in³</p>
+        </div>
+    `).join('') + `
+        <div class="bg-blue-50 rounded-lg p-4">
+            <h3 class="font-medium text-gray-700">Total Volume</h3>
+            <p class="text-2xl font-bold text-blue-800">${totalVolume.toFixed(2)} in³</p>
+        </div>
+    `;
+
+    document.getElementById('materialSummary').innerHTML = summaryHtml;
+}
+
+function updateRowTotalVolume(rowIndex) {
+    const item = tableData[rowIndex];
+    const totalVolume = calculateTotalVolume(item.volume, item.quantity);
+    const cells = document.querySelectorAll('.total-volume-cell');
+    cells[rowIndex].textContent = `${totalVolume} in³`;
+}
+
+function updateAllTotalVolumes() {
+    tableData.forEach((_, index) => {
+        updateRowTotalVolume(index);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize total volumes
+    updateAllTotalVolumes();
+    updateMaterialSummary();
+
+    // Handle material selection changes
+    const materialSelects = document.querySelectorAll('.material-select');
+    materialSelects.forEach(select => {
+        select.addEventListener('change', function(e) {
+            const rowIndex = this.dataset.row;
+            tableData[rowIndex].material = this.value;
+            updateMaterialSummary();
+        });
+    });
+
+    // Handle quantity changes
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const rowIndex = this.dataset.row;
+            const newQuantity = parseInt(this.value) || 1;
+            this.value = newQuantity; // Ensure valid number
+            tableData[rowIndex].quantity = newQuantity;
+            updateRowTotalVolume(rowIndex);
+            updateMaterialSummary();
+        });
+    });
+});
+</script>
+{% endblock %}

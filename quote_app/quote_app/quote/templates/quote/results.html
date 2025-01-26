@@ -1,74 +1,319 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-700">Total Components</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ summary.total_components }}</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-700">Total Volume</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ summary.total_volume }} in³</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-700">Total Quantity</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ summary.total_quantity }}</p>
-        </div>
-    </div>
-
-    <!-- Results Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">Component Analysis Results</h2>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Component
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Volume (in³)
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Material
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Quantity
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for row in table_data %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ row.Component }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ row.Volume (in³)|floatformat:2 }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ row.Material }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ row.Quantity }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <h1 class="text-2xl font-bold mb-6">Analysis Results</h1>
+    
+    <!-- Price Information Card -->
+    <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Material Prices</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h3 class="font-medium text-gray-700">Acero inoxidable</h3>
+                <p class="text-lg font-bold text-blue-600">${{ company_prices.stainless_steel }}/kg</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h3 class="font-medium text-gray-700">Acero al carbono</h3>
+                <p class="text-lg font-bold text-blue-600">${{ company_prices.carbon_steel }}/kg</p>
+            </div>
         </div>
     </div>
 
-    <!-- Back Button -->
-    <div class="mt-8">
-        <a href="{% url 'upload' %}" 
-           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Upload Another File
-        </a>
+    <!-- Material Summary Card -->
+    <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Material Summary</h2>
+        <div id="materialSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- JavaScript will populate this -->
+        </div>
+    </div>
+    
+    <!-- Components Table -->
+    <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+        <table class="min-w-full table-auto">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume (in³)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (kg)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for item in table_data %}
+                <tr class="hover:bg-gray-50" data-row="{{ forloop.counter0 }}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.component }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <select 
+                            class="material-select border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            data-row="{{ forloop.counter0 }}"
+                            data-initial-material="{{ item.material }}"
+                        >
+                            <option value="Not specified">Not specified</option>
+                            <option value="stainless_steel" {% if item.material == "stainless_steel" %}selected{% endif %}>Acero inoxidable</option>
+                            <option value="carbon_steel" {% if item.material == "carbon_steel" %}selected{% endif %}>Acero al carbono</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.volume|floatformat:2 }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 weight-cell">
+                        <!-- JavaScript will calculate this -->
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 unit-cost-cell">
+                        <!-- JavaScript will calculate this -->
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <input type="number" 
+                               class="quantity-input border rounded px-2 py-1 text-sm w-20"
+                               value="{{ item.quantity }}"
+                               min="1"
+                               data-row="{{ forloop.counter0 }}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 total-cost-cell">
+                        <!-- JavaScript will calculate this -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bulk Material Selection -->
+    <div class="mt-8 bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-2">Bulk Material Selection</h3>
+        <div class="flex items-center gap-4">
+            <select id="bulkMaterialSelect" class="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select material for all components</option>
+                <option value="stainless_steel">Acero inoxidable</option>
+                <option value="carbon_steel">Acero al carbono</option>
+            </select>
+            <button 
+                id="applyBulkMaterial" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Apply to All
+            </button>
+        </div>
     </div>
 </div>
+
+<script>
+// Store the initial data and configuration
+const materialDensities = {
+    'stainless_steel': {{ material_densities.stainless_steel }},
+    'carbon_steel': {{ material_densities.carbon_steel }}
+};
+
+const companyPrices = {
+    'stainless_steel': {{ company_prices.stainless_steel }},
+    'carbon_steel': {{ company_prices.carbon_steel }}
+};
+
+// Create a deep copy of the initial data that we can modify
+let tableData = JSON.parse(JSON.stringify({{ table_data|safe }}));
+
+console.log('Initial table data:', tableData);
+console.log('Material densities:', materialDensities);
+console.log('Company prices:', companyPrices);
+
+const materialDisplayNames = {
+    'stainless_steel': 'Acero inoxidable',
+    'carbon_steel': 'Acero al carbono'
+};
+
+function calculateWeight(volume, material) {
+    if (!material || material === 'Not specified') return 0;
+    if (!materialDensities[material]) {
+        console.error('No density found for material:', material);
+        return 0;
+    }
+    return (parseFloat(volume || 0) * materialDensities[material]).toFixed(2);
+}
+
+function calculateUnitCost(weight, material) {
+    if (!material || material === 'Not specified') return 0;
+    const price = companyPrices[material];
+    if (!price) {
+        console.error('No price found for material:', material);
+        return 0;
+    }
+    return (parseFloat(weight) * price).toFixed(2);
+}
+
+function calculateTotalCost(unitCost, quantity) {
+    return (parseFloat(unitCost) * parseInt(quantity)).toFixed(2);
+}
+
+function updateMaterialSummary() {
+    // Initialize summary object
+    const summary = {
+        'stainless_steel': { volume: 0, weight: 0, cost: 0, quantity: 0 },
+        'carbon_steel': { volume: 0, weight: 0, cost: 0, quantity: 0 }
+    };
+    
+    let totalWeight = 0;
+    let totalCost = 0;
+
+    // Process each row
+    tableData.forEach((item, index) => {
+        if (!item.material || item.material === 'Not specified') return;
+        
+        // Calculate values
+        const volume = parseFloat(item.volume || 0);
+        const quantity = parseInt(item.quantity || 1);
+        const weight = parseFloat(calculateWeight(volume, item.material));
+        const unitCost = parseFloat(calculateUnitCost(weight, item.material));
+        const itemTotalCost = parseFloat(calculateTotalCost(unitCost, quantity));
+        
+        // Update summary
+        summary[item.material].volume += volume * quantity;
+        summary[item.material].weight += weight * quantity;
+        summary[item.material].cost += itemTotalCost;
+        summary[item.material].quantity += quantity;
+        
+        // Update totals
+        totalWeight += weight * quantity;
+        totalCost += itemTotalCost;
+    });
+
+    // Update the summary display
+    const summaryHtml = Object.entries(summary)
+        .filter(([material, data]) => data.quantity > 0)  // Only show materials that are being used
+        .map(([material, data]) => `
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-medium text-gray-700">${materialDisplayNames[material]}</h3>
+                <div class="mt-2 space-y-1">
+                    <p class="text-sm text-gray-600">Components: ${data.quantity}</p>
+                    <p class="text-sm text-gray-600">Total Volume: ${data.volume.toFixed(2)} in³</p>
+                    <p class="text-sm text-gray-600">Total Weight: ${data.weight.toFixed(2)} kg</p>
+                    <p class="text-lg font-bold text-blue-600">Total Cost: $${data.cost.toFixed(2)}</p>
+                </div>
+            </div>
+        `).join('');
+
+    // Add total summary card
+    const totalSummary = `
+        <div class="bg-blue-50 rounded-lg p-4 col-span-full">
+            <h3 class="font-medium text-gray-700">Total Summary</h3>
+            <div class="mt-2 space-y-1">
+                <p class="text-lg text-gray-600">Total Weight: ${totalWeight.toFixed(2)} kg</p>
+                <p class="text-2xl font-bold text-blue-800">Total Cost: $${totalCost.toFixed(2)}</p>
+            </div>
+        </div>
+    `;
+
+    const summaryElement = document.getElementById('materialSummary');
+    if (summaryElement) {
+        summaryElement.innerHTML = summaryHtml + totalSummary;
+    } else {
+        console.error('Material summary element not found');
+    }
+}
+
+function updateRowCalculations(rowIndex) {
+    const item = tableData[rowIndex];
+    const weight = calculateWeight(item.volume, item.material);
+    const unitCost = calculateUnitCost(weight, item.material);
+    const totalCost = calculateTotalCost(unitCost, item.quantity);
+
+    const rows = document.querySelectorAll('tr[data-row]');
+    const row = rows[rowIndex];
+    
+    if (row) {
+        const weightCell = row.querySelector('.weight-cell');
+        const unitCostCell = row.querySelector('.unit-cost-cell');
+        const totalCostCell = row.querySelector('.total-cost-cell');
+
+        if (weightCell) weightCell.textContent = `${weight} kg`;
+        if (unitCostCell) unitCostCell.textContent = `$${unitCost}`;
+        if (totalCostCell) totalCostCell.textContent = `$${totalCost}`;
+    }
+}
+
+function updateAllCalculations() {
+    tableData.forEach((_, index) => {
+        updateRowCalculations(index);
+    });
+    updateMaterialSummary();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+    
+    // Initialize with saved materials
+    const materialSelects = document.querySelectorAll('.material-select');
+    materialSelects.forEach(select => {
+        const rowIndex = parseInt(select.dataset.row);
+        const initialMaterial = select.dataset.initialMaterial;
+        
+        console.log(`Initializing row ${rowIndex}:`, {
+            initialMaterial,
+            currentValue: select.value
+        });
+        
+        if (initialMaterial && initialMaterial !== 'Not specified') {
+            select.value = initialMaterial;
+            if (tableData[rowIndex]) {
+                tableData[rowIndex].material = initialMaterial;
+                console.log(`Set initial material for row ${rowIndex} to ${initialMaterial}`);
+            }
+        } else {
+            if (tableData[rowIndex]) {
+                tableData[rowIndex].material = 'Not specified';
+                console.log(`No initial material for row ${rowIndex}, setting to Not specified`);
+            }
+        }
+    });
+
+    // Initialize calculations
+    updateAllCalculations();
+
+    // Handle material selection changes
+    materialSelects.forEach(select => {
+        select.addEventListener('change', function(e) {
+            const rowIndex = this.dataset.row;
+            tableData[rowIndex].material = this.value;
+            updateRowCalculations(rowIndex);
+            updateMaterialSummary();
+        });
+    });
+
+    // Handle quantity changes
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const rowIndex = this.dataset.row;
+            const newQuantity = parseInt(this.value) || 1;
+            this.value = newQuantity;
+            tableData[rowIndex].quantity = newQuantity;
+            updateRowCalculations(rowIndex);
+            updateMaterialSummary();
+        });
+    });
+
+    // Handle bulk material selection
+    const bulkMaterialButton = document.getElementById('applyBulkMaterial');
+    if (bulkMaterialButton) {
+        bulkMaterialButton.addEventListener('click', function() {
+            const selectedMaterial = document.getElementById('bulkMaterialSelect').value;
+            if (!selectedMaterial) return;
+            
+            console.log('Applying material:', selectedMaterial, 'to all components');
+            
+            // Update select elements and data
+            document.querySelectorAll('.material-select').forEach(select => {
+                const rowIndex = parseInt(select.dataset.row);
+                select.value = selectedMaterial;
+                
+                if (tableData[rowIndex]) {
+                    tableData[rowIndex].material = selectedMaterial;
+                }
+            });
+            
+            // Force recalculation of all rows
+            updateAllCalculations();
+        });
+    }
+});
+</script>
 {% endblock %}

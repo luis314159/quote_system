@@ -116,7 +116,7 @@ def analyze_step_file(file: TextIOWrapper, csv_output_path: Optional[str] = "../
             csv_output_path = f"step_analysis_{timestamp}.csv"
         else:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            csv_output_path = f"{csv_output_path}{timestamp}.csv"
+            csv_output_path = f"{csv_output_path}//csv{timestamp}.csv"
 
         data = [
             {

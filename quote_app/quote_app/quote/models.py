@@ -45,13 +45,13 @@ class Company(models.Model):
     contact_email = models.EmailField("Email de Contacto")
     contact_phone = models.CharField("Teléfono de Contacto", max_length=20)
     stainless_steel_price = models.DecimalField(
-        "Precio Acero Inoxidable por Kg",
+        "Stainless Steel Price per lb",
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
     carbon_steel_price = models.DecimalField(
-        "Precio Acero al Carbono por Kg",
+        "Carbon Steel Price per lb",
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)]

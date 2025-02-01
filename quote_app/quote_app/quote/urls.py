@@ -9,5 +9,6 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('upload/', views.upload_step, name='upload'),  
     path('results/', views.results, name='results'),
-    path('update-material/', views.update_material, name='update_material'),  
+    path('update-material/', views.update_material, name='update_material'),
+    path('generate_quote/', views.generate_quote, name='generate_quote'),
 ]

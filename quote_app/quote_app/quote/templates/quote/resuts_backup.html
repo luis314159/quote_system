@@ -2,146 +2,216 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Analysis Results</h1>
+    <h1 class="text-2xl font-bold mb-6">Material Analysis Results</h1>
     
-    <!-- Material Summary Card -->
+    <!-- Project Information -->
     <div class="mb-8 bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Volume Summary by Material</h2>
-        <div id="materialSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- JavaScript will populate this -->
+        <h2 class="text-xl font-semibold mb-4">Project Information</h2>
+        <div class="max-w-xl">
+            <input type="text" 
+                   name="project_name" 
+                   class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                   placeholder="Enter project name"
+                   required>
+    
+    <!-- Price Information Card -->
+    <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Material Prices</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h3 class="font-medium text-gray-700">Stainless Steel</h3>
+                <p class="text-lg font-bold text-blue-600">${{ request.user.company.stainless_steel_price }}/lb</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h3 class="font-medium text-gray-700">Carbon Steel</h3>
+                <p class="text-lg font-bold text-blue-600">${{ request.user.company.carbon_steel_price }}/lb</p>
+            </div>
         </div>
     </div>
-    
-    <!-- Components Table -->
-    <div class="overflow-x-auto bg-white shadow-md rounded-lg">
-        <table class="min-w-full table-auto">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume (in³)</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vertices</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faces</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Volume</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for item in table_data %}
-                <tr class="hover:bg-gray-50" data-row="{{ forloop.counter0 }}">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.component }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {% if item.material == "Not specified" %}
-                        <select 
-                            class="material-select border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            data-row="{{ forloop.counter0 }}"
-                        >
-                            <option value="Not specified">Not specified</option>
-                            <option value="Acero inoxidable">Acero inoxidable</option>
-                            <option value="Acero al carbono">Acero al carbono</option>
-                        </select>
-                        {% else %}
-                        {{ item.material }}
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.volume|floatformat:2 }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.vertices }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.faces }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <input type="number" 
-                               class="quantity-input border rounded px-2 py-1 text-sm w-20"
-                               value="{{ item.quantity }}"
-                               min="1"
-                               data-row="{{ forloop.counter0 }}">
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 total-volume-cell">
-                        <!-- JavaScript will calculate this -->
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+
+    <form method="POST" action="{% url 'quote:generate_quote' %}" id="quoteForm">
+        {% csrf_token %}
+        
+        <!-- Materials Table -->
+        <div class="overflow-x-auto bg-white shadow-md rounded-lg mb-8">
+            <table class="min-w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in table_data %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ item.component }}
+                            <input type="hidden" name="components[]" value="{{ item.component }}">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <select 
+                                name="materials[]"
+                                class="material-select border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                data-component="{{ item.component }}"
+                            >
+                                <option value="">Select material</option>
+                                <option value="stainless_steel" {% if item.material == "stainless_steel" %}selected{% endif %}>
+                                    Stainless Steel
+                                </option>
+                                <option value="carbon_steel" {% if item.material == "carbon_steel" %}selected{% endif %}>
+                                    Carbon Steel
+                                </option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <input type="number" 
+                                   name="quantities[]"
+                                   class="quantity-input border rounded px-2 py-1 text-sm w-20"
+                                   value="{{ item.quantity|default:1 }}"
+                                   min="1"
+                                   data-component="{{ item.component }}">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="unit-price-{{ forloop.counter }}">
+                            ${{ item.unit_price|default:"0.00" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" id="total-price-{{ forloop.counter }}">
+                            ${{ item.total_price|default:"0.00" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-50">
+                        <td colspan="4" class="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                            Total:
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900" id="grand-total">
+                            ${{ total_price|default:"0.00" }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Bulk Material Selection -->
+        <div class="mt-8 bg-white shadow-md rounded-lg p-4">
+            <h3 class="text-lg font-semibold mb-2">Bulk Material Selection</h3>
+            <div class="flex items-center gap-4">
+                <select id="bulkMaterialSelect" class="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select material for all components</option>
+                    <option value="stainless_steel">Stainless Steel</option>
+                    <option value="carbon_steel">Carbon Steel</option>
+                </select>
+                <button 
+                    type="button"
+                    id="applyBulkMaterial" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Apply to All
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex justify-end space-x-4">
+            <button 
+                type="button"
+                id="calculatePrices" 
+                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Calculate Prices
+            </button>
+            <button 
+                type="submit" 
+                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                Generate Quote PDF
+            </button>
+        </div>
+    </form>
 </div>
 
 <script>
-// Store the initial data in a JavaScript variable
-const tableData = {{ table_data|safe }};
-
-function calculateTotalVolume(volume, quantity) {
-    return (parseFloat(volume) * parseInt(quantity)).toFixed(2);
-}
-
-function updateMaterialSummary() {
-    const materialSummary = {};
-    let totalVolume = 0;
-
-    // Calculate volumes by material
-    tableData.forEach(item => {
-        const totalVolumeForItem = parseFloat(calculateTotalVolume(item.volume, item.quantity));
-        if (!materialSummary[item.material]) {
-            materialSummary[item.material] = 0;
-        }
-        materialSummary[item.material] += totalVolumeForItem;
-        totalVolume += totalVolumeForItem;
-    });
-
-    // Update the summary display
-    const summaryHtml = Object.entries(materialSummary).map(([material, volume]) => `
-        <div class="bg-gray-50 rounded-lg p-4">
-            <h3 class="font-medium text-gray-700">${material}</h3>
-            <p class="text-2xl font-bold text-blue-600">${volume.toFixed(2)} in³</p>
-        </div>
-    `).join('') + `
-        <div class="bg-blue-50 rounded-lg p-4">
-            <h3 class="font-medium text-gray-700">Total Volume</h3>
-            <p class="text-2xl font-bold text-blue-800">${totalVolume.toFixed(2)} in³</p>
-        </div>
-    `;
-
-    document.getElementById('materialSummary').innerHTML = summaryHtml;
-}
-
-function updateRowTotalVolume(rowIndex) {
-    const item = tableData[rowIndex];
-    const totalVolume = calculateTotalVolume(item.volume, item.quantity);
-    const cells = document.querySelectorAll('.total-volume-cell');
-    cells[rowIndex].textContent = `${totalVolume} in³`;
-}
-
-function updateAllTotalVolumes() {
-    tableData.forEach((_, index) => {
-        updateRowTotalVolume(index);
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize total volumes
-    updateAllTotalVolumes();
-    updateMaterialSummary();
+    const stainlessSteelPrice = {{ request.user.company.stainless_steel_price }};
+    const carbonSteelPrice = {{ request.user.company.carbon_steel_price }};
 
-    // Handle material selection changes
-    const materialSelects = document.querySelectorAll('.material-select');
-    materialSelects.forEach(select => {
-        select.addEventListener('change', function(e) {
-            const rowIndex = this.dataset.row;
-            tableData[rowIndex].material = this.value;
-            updateMaterialSummary();
+    // Handle bulk material selection
+    const bulkMaterialButton = document.getElementById('applyBulkMaterial');
+    if (bulkMaterialButton) {
+        bulkMaterialButton.addEventListener('click', function() {
+            const selectedMaterial = document.getElementById('bulkMaterialSelect').value;
+            if (!selectedMaterial) return;
+            
+            document.querySelectorAll('.material-select').forEach(select => {
+                select.value = selectedMaterial;
+            });
+            calculateAllPrices();
         });
+    }
+
+    // Calculate prices for a single row
+    function calculateRowPrices(row) {
+        const materialSelect = row.querySelector('.material-select');
+        const quantityInput = row.querySelector('.quantity-input');
+        const unitPriceCell = row.querySelector('[id^="unit-price-"]');
+        const totalPriceCell = row.querySelector('[id^="total-price-"]');
+        
+        const material = materialSelect.value;
+        const quantity = parseInt(quantityInput.value) || 0;
+        
+        let unitPrice = 0;
+        if (material === 'stainless_steel') {
+            unitPrice = stainlessSteelPrice;
+        } else if (material === 'carbon_steel') {
+            unitPrice = carbonSteelPrice;
+        }
+        
+        const totalPrice = unitPrice * quantity;
+        
+        unitPriceCell.textContent = `$${unitPrice.toFixed(2)}`;
+        totalPriceCell.textContent = `$${totalPrice.toFixed(2)}`;
+        
+        return totalPrice;
+    }
+
+    // Calculate all prices and update grand total
+    function calculateAllPrices() {
+        let grandTotal = 0;
+        document.querySelectorAll('tbody tr').forEach(row => {
+            grandTotal += calculateRowPrices(row);
+        });
+        document.getElementById('grand-total').textContent = `$${grandTotal.toFixed(2)}`;
+    }
+
+    // Add event listeners for material and quantity changes
+    document.querySelectorAll('.material-select, .quantity-input').forEach(element => {
+        element.addEventListener('change', calculateAllPrices);
     });
 
-    // Handle quantity changes
-    const quantityInputs = document.querySelectorAll('.quantity-input');
-    quantityInputs.forEach(input => {
-        input.addEventListener('change', function(e) {
-            const rowIndex = this.dataset.row;
-            const newQuantity = parseInt(this.value) || 1;
-            this.value = newQuantity; // Ensure valid number
-            tableData[rowIndex].quantity = newQuantity;
-            updateRowTotalVolume(rowIndex);
-            updateMaterialSummary();
+    // Calculate button click handler
+    document.getElementById('calculatePrices').addEventListener('click', calculateAllPrices);
+
+    // Form validation
+    const form = document.getElementById('quoteForm');
+    form.addEventListener('submit', function(e) {
+        const materialSelects = document.querySelectorAll('.material-select');
+        let hasEmptyMaterial = false;
+        
+        materialSelects.forEach(select => {
+            if (!select.value) {
+                hasEmptyMaterial = true;
+            }
         });
+
+        if (hasEmptyMaterial) {
+            e.preventDefault();
+            alert('Please select materials for all components before generating the quote.');
+        }
     });
+
+    // Initial calculation
+    calculateAllPrices();
 });
 </script>
 {% endblock %}

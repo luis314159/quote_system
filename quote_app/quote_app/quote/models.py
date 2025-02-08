@@ -126,7 +126,7 @@ class MaterialDensity(models.Model):
         verbose_name="Tipo de Material"
     )
     density = models.FloatField(
-        verbose_name="Densidad (g/cm³)",
+        verbose_name="Densidad (lb/in³)",
         help_text="Ingrese la densidad en gramos por centímetro cúbico."
     )
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")

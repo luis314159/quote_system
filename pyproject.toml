@@ -19,6 +19,7 @@ django-crispy-forms = "^2.3"
 crispy-tailwind = "^1.0.3"
 reportlab = "^4.2.5"
 whitenoise = "^6.8.2"
+python-dotenv = "^1.0.1"
 
 
 [build-system]

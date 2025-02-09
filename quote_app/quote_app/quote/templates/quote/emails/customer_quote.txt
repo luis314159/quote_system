@@ -1,0 +1,7 @@
+# templates/quote/email/customer_quote.txt
+Thank you for requesting a quote for your project: {{ project_name }}
+
+Please find attached your quote document.
+
+Best regards,
+Grupo ARGA Team

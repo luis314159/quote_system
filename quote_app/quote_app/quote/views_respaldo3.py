@@ -186,13 +186,12 @@ from email.mime.image import MIMEImage
 logger = logging.getLogger(__name__)
 
 class QuoteGenerator:
-    def __init__(self, user, project_data, is_internal=False):
+    def __init__(self, user, project_data):
         self.user = user
         self.company = user.company
         self.project_data = project_data
         self.elements = []
         self.styles = getSampleStyleSheet()
-        self.is_internal = is_internal  # Flag para diferenciar el tipo de PDF
         self.setup_custom_styles()
 
     def setup_custom_styles(self):
@@ -305,6 +304,7 @@ class QuoteGenerator:
         self._create_info_tables(company_info, quote_info)
 
     def _create_info_tables(self, company_info, quote_info):
+        """Create and add the company and quote info tables to elements."""
         left_table = Table(company_info, colWidths=[1.5*inch, 3*inch])
         right_table = Table(quote_info, colWidths=[1.5*inch, 2*inch])
         
@@ -319,6 +319,7 @@ class QuoteGenerator:
         left_table.setStyle(table_style)
         right_table.setStyle(table_style)
 
+        # Combine tables side by side
         main_table = Table([[left_table, right_table]], colWidths=[4.5*inch, 3*inch])
         self.elements.append(main_table)
         self.elements.append(Spacer(1, 20))
@@ -331,15 +332,7 @@ class QuoteGenerator:
         self.elements.append(Paragraph("Components Details", self.styles['Heading2']))
         self.elements.append(Spacer(1, 20))
 
-        if self.is_internal:
-            self._add_internal_components_table()
-        else:
-            self._add_customer_components_table()
-
-    def _add_customer_components_table(self):
-        """Tabla simplificada para el cliente"""
         items_data = [['Component', 'Material', 'Quantity']]
-        
         for comp, mat, qty in zip(
             self.project_data['components'],
             self.project_data['materials'],
@@ -361,85 +354,6 @@ class QuoteGenerator:
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('PADDING', (0, 0), (-1, -1), 12),
         ]))
-        self.elements.append(components_table)
-
-    def _add_internal_components_table(self):
-        """Tabla detallada para uso interno"""
-        items_data = [['Component', 'Material', 'Quantity', 'Volume (in³)', 'Weight (lbs)', 'Unit Cost', 'Total Cost']]
-        
-        total_volume = 0
-        total_weight = 0
-        total_cost = 0
-
-        material_densities = {
-            material.material_type: material.density 
-            for material in MaterialDensity.objects.all()
-        }
-
-        for comp, mat, qty, vol in zip(
-            self.project_data['components'],
-            self.project_data['materials'],
-            self.project_data['quantities'],
-            self.project_data['volumes']
-        ):
-            volume = float(vol)
-            quantity = float(qty)
-            
-            unit_price = (
-                float(self.company.stainless_steel_price)
-                if mat == 'stainless_steel'
-                else float(self.company.carbon_steel_price)
-            )
-            
-            density = material_densities.get(mat, 0.284)
-            weight = volume * density
-            
-            total_item_cost = unit_price * quantity
-            
-            total_volume += volume * quantity
-            total_weight += weight * quantity
-            total_cost += total_item_cost
-            
-            items_data.append([
-                comp,
-                mat.replace('_', ' ').title(),
-                f"{quantity:,.0f}",
-                f"{volume:,.2f}",
-                f"{weight:,.2f}",
-                f"${unit_price:,.2f}",
-                f"${total_item_cost:,.2f}"
-            ])
-
-        items_data.append([
-            'TOTALS',
-            '',
-            '',
-            f"{total_volume:,.2f}",
-            f"{total_weight:,.2f}",
-            '',
-            f"${total_cost:,.2f}"
-        ])
-
-        components_table = Table(
-            items_data, 
-            colWidths=[2*inch, 1.5*inch, 0.8*inch, 1*inch, 1*inch, 1*inch, 1*inch]
-        )
-        
-        table_style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.black),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('PADDING', (0, 0), (-1, -1), 6),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.grey),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-        ])
-        
-        components_table.setStyle(table_style)
         self.elements.append(components_table)
 
     def generate_pdf(self):
@@ -487,111 +401,55 @@ class QuoteGenerator:
         canvas.drawRightString(7.5*inch, 0.5*inch, f"Page {canvas.getPageNumber()}")
         canvas.restoreState()
 
-def send_quote_email(customer_pdf_content, internal_pdf_content, project_name, user_email, internal_email_addr, project_data, company, material_densities):
+def send_quote_email(pdf_content, project_name, user_email, internal_email_addr):
     """Send quote PDF to customer and internal email using direct SMTP."""
     try:
         logger.info("=" * 50)
         logger.info("INICIANDO PROCESO DE ENVÍO DE CORREO CON SMTP DIRECTO")
         logger.info("=" * 50)
 
-        # Preparar datos para las plantillas
-        components_data = []
-        total_volume = 0
-        total_weight = 0
-        total_cost = 0
-
-        for comp, mat, qty, vol in zip(
-            project_data['components'],
-            project_data['materials'],
-            project_data['quantities'],
-            project_data['volumes']
-        ):
-            # Calcular precio unitario según el material
-            unit_price = (
-                float(company.stainless_steel_price) 
-                if mat == 'stainless_steel'
-                else float(company.carbon_steel_price)
-            )
-            
-            # Calcular peso usando la densidad del material
-            density = material_densities.get(mat, 0.284)  # 0.284 lbs/in³ como valor por defecto
-            weight = float(vol) * density
-            
-            # Calcular costos
-            total_item_cost = unit_price * float(qty)
-            
-            components_data.append({
-                'component': comp,
-                'material': mat.replace('_', ' ').title(),
-                'quantity': qty,
-                'volume': float(vol),
-                'weight': weight,
-                'unit_cost': unit_price,
-                'total_cost': total_item_cost
-            })
-            
-            total_volume += float(vol) * float(qty)
-            total_weight += weight * float(qty)
-            total_cost += total_item_cost
-
-        # Contexto para las plantillas
-        email_context = {
-            'project_name': project_name,
-            'components': components_data,
-            'total_components': len(components_data),
-            'total_volume': total_volume,
-            'total_weight': total_weight,
-            'total_cost': total_cost,
-            'company_name': company.name,
-            'contact_name': company.contact_name,
-            'contact_email': company.contact_email
-        }
-
-        # Crear mensaje para el cliente
-        msg = MIMEMultipart('alternative')
+        # Crear el mensaje para el cliente
+        msg = MIMEMultipart('related')
         msg["From"] = f"{settings.MAIL_FROM_NAME} <{settings.MAIL_FROM_EMAIL}>"
         msg["To"] = user_email
         msg["Subject"] = f"Your Quote for Project: {project_name}"
 
-        # Renderizar plantillas para el cliente
-        logger.info("Intentando renderizar plantillas de correo para cliente")
-        try:
-            text_content = render_to_string('quote/emails/customer_quote.txt', email_context)
-            html_content = render_to_string('quote/emails/customer_quote.html', email_context)
-            logger.info("Plantillas renderizadas exitosamente")
-        except Exception as e:
-            logger.error(f"Error renderizando plantillas: {str(e)}")
-            raise
+        # Crear la parte alternativa
+        msgAlternative = MIMEMultipart('alternative')
+        msg.attach(msgAlternative)
 
-        msg.attach(MIMEText(text_content, 'plain'))
-        msg.attach(MIMEText(html_content, 'html'))
+        # Contenido texto plano
+        text_content = f"""
+        Thank you for requesting a quote for your project: {project_name}
+        
+        Please find attached your quote document.
+        
+        Best regards,
+        Grupo ARGA Team
+        """
+        msgAlternative.attach(MIMEText(text_content, 'plain'))
 
-        # Adjuntar PDF para cliente
-        customer_pdf = MIMEApplication(customer_pdf_content, _subtype='pdf')
+        # Contenido HTML
+        html_content = f"""
+        <html>
+        <body>
+            <h2>Quote for Project: {project_name}</h2>
+            <p>Thank you for requesting a quote.</p>
+            <p>Please find attached your quote document.</p>
+            <br>
+            <p>Best regards,<br>Grupo ARGA Team</p>
+        </body>
+        </html>
+        """
+        msgAlternative.attach(MIMEText(html_content, 'html'))
+
+        # Adjuntar el PDF
+        pdf_attachment = MIMEApplication(pdf_content, _subtype='pdf')
         filename = f"Grupo_ARGA_Quote_{project_name.strip().replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d')}.pdf"
-        customer_pdf.add_header('Content-Disposition', 'attachment', filename=filename)
-        msg.attach(customer_pdf)
+        pdf_attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+        msg.attach(pdf_attachment)
 
-        # Preparar mensaje interno con PDF detallado
-        msg_internal = MIMEMultipart('alternative')
-        msg_internal["From"] = f"{settings.MAIL_FROM_NAME} <{settings.MAIL_FROM_EMAIL}>"
-        msg_internal["To"] = internal_email_addr
-        msg_internal["Subject"] = f"[INTERNAL] New Quote Generated - Project: {project_name}"
-
-        # Renderizar plantillas para correo interno
-        text_content = render_to_string('quote/emails/internal_quote.txt', email_context)
-        html_content = render_to_string('quote/emails/internal_quote.html', email_context)
-
-        msg_internal.attach(MIMEText(text_content, 'plain'))
-        msg_internal.attach(MIMEText(html_content, 'html'))
-
-        # Adjuntar PDF interno
-        internal_pdf = MIMEApplication(internal_pdf_content, _subtype='pdf')
-        internal_filename = f"Grupo_ARGA_Quote_INTERNAL_{project_name.strip().replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d')}.pdf"
-        internal_pdf.add_header('Content-Disposition', 'attachment', filename=internal_filename)
-        msg_internal.attach(internal_pdf)
-
-        # Adjuntar logo si existe
+        # Adjuntar logo
         try:
             logo_path = os.path.join(settings.STATIC_ROOT, 'images', 'gpoargaHDpng.png')
             with open(logo_path, "rb") as logo_file:
@@ -599,85 +457,196 @@ def send_quote_email(customer_pdf_content, internal_pdf_content, project_name, u
                 logo.add_header('Content-ID', '<logo>')
                 logo.add_header('Content-Disposition', 'inline')
                 msg.attach(logo)
-                msg_internal.attach(logo)
         except FileNotFoundError:
             logger.warning("Logo no encontrado, continuando sin él")
 
-        # Enviar correos usando SMTP
-        with smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT) as server:
-            if settings.MAIL_TLS:
-                server.starttls()
-            server.login(settings.MAIL_USERNAME, settings.MAIL_PASSWORD)
-            
-            # Enviar al cliente
-            logger.info(f"Enviando correo al cliente: {user_email}")
-            server.sendmail(settings.MAIL_FROM_EMAIL, user_email, msg.as_string())
-            
-            # Enviar correo interno
-            logger.info(f"Enviando correo interno a: {internal_email_addr}")
-            server.sendmail(
-                settings.MAIL_FROM_EMAIL,
-                internal_email_addr,
-                msg_internal.as_string()
-            )
+        # Enviar correo
+        logger.info(f"Intentando conectar a servidor SMTP: {settings.MAIL_SERVER}:{settings.MAIL_PORT}")
+        try:
+            with smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT) as server:
+                if settings.MAIL_TLS:
+                    server.starttls()
+                logger.info(f"Iniciando sesión con usuario: {settings.MAIL_USERNAME}")
+                server.login(settings.MAIL_USERNAME, settings.MAIL_PASSWORD)
+                
+                # Enviar al cliente
+                logger.info(f"Enviando correo al cliente: {user_email}")
+                server.sendmail(
+                    settings.MAIL_FROM_EMAIL,
+                    user_email,
+                    msg.as_string()
+                )
+                logger.info("Correo enviado al cliente exitosamente")
 
-        logger.info("Proceso de envío completado exitosamente")
+                # Preparar y enviar copia interna
+                msg.replace_header("To", internal_email_addr)
+                msg.replace_header("Subject", f"[INTERNAL COPY] New Quote Generated - Project: {project_name}")
+                
+                logger.info(f"Enviando copia interna a: {internal_email_addr}")
+                server.sendmail(
+                    settings.MAIL_FROM_EMAIL,
+                    internal_email_addr,
+                    msg.as_string()
+                )
+                logger.info("Copia interna enviada exitosamente")
+
+        except Exception as e:
+            logger.error(f"Error en el envío de correo: {str(e)}")
+            raise
+
+        logger.info("=" * 50)
+        logger.info("PROCESO DE ENVÍO COMPLETADO")
+        logger.info("=" * 50)
         return True
 
     except Exception as e:
-        logger.error("Error en el envío de correo:")
+        logger.error("=" * 50)
+        logger.error("ERROR EN EL ENVÍO DE CORREO")
+        logger.error("=" * 50)
         logger.error(f"Tipo de error: {type(e).__name__}")
         logger.error(f"Mensaje de error: {str(e)}")
-        logger.error("Stacktrace:", exc_info=True)
+        logger.error("=" * 50)
         return False
-    
+        
+        filename = f"Grupo_ARGA_Quote_{project_name.strip().replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        # Customer email
+        logger.info("\nPREPARANDO CORREO PARA CLIENTE:")
+        logger.info(f"Destinatario: {user_email}")
+        logger.info(f"Remitente: {settings.DEFAULT_FROM_EMAIL}")
+        logger.info(f"Asunto: Your Quote for Project: {project_name}")
+        
+        if not user_email:
+            raise ValueError("Email del cliente no configurado")
+        
+        email = EmailMessage(
+            subject=f'Your Quote for Project: {project_name}',
+            body='Please find attached your quote.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user_email]
+        )
+        email.attach(filename, pdf_content, 'application/pdf')
+        logger.info("Intentando enviar correo al cliente...")
+        
+        try:
+            email.send(fail_silently=False)
+            logger.info("Correo del cliente enviado exitosamente")
+        except Exception as e:
+            logger.error(f"Error enviando correo al cliente: {str(e)}")
+            raise
+
+        # Internal email
+        logger.info("\nPREPARANDO CORREO INTERNO:")
+        logger.info(f"Destinatario interno: {internal_email_addr}")
+        logger.info(f"Remitente: {settings.DEFAULT_FROM_EMAIL}")
+        logger.info(f"Asunto: New Quote Generated - Project: {project_name}")
+        
+        if not internal_email_addr:
+            raise ValueError("Email interno no configurado")
+            
+        internal_mail = EmailMessage(
+            subject=f'New Quote Generated - Project: {project_name}',
+            body='Please find attached the quote generated for customer review.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[internal_email_addr]
+        )
+        internal_mail.attach(filename, pdf_content, 'application/pdf')
+        
+        try:
+            internal_mail.send(fail_silently=False)
+            logger.info("Correo interno enviado exitosamente")
+        except Exception as e:
+            logger.error(f"Error enviando correo interno: {str(e)}")
+            raise
+        
+        logger.info("=" * 50)
+        logger.info("PROCESO DE ENVÍO COMPLETADO")
+        logger.info("=" * 50)
+
+        return True
+    except Exception as e:
+        logger.error("=" * 50)
+        logger.error("ERROR EN EL ENVÍO DE CORREO")
+        logger.error("=" * 50)
+        logger.error(f"Tipo de error: {type(e).__name__}")
+        logger.error(f"Mensaje de error: {str(e)}")
+        logger.error("Detalles de la configuración en el momento del error:")
+        logger.error(f"DEBUG: {settings.DEBUG}")
+        logger.error(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
+        logger.error(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+        logger.error(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        logger.error(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+        logger.error(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER or 'No configurado'}")
+        logger.error(f"EMAIL_HOST_PASSWORD: {'Configurado' if settings.EMAIL_HOST_PASSWORD else 'No configurado'}")
+        logger.error("=" * 50)
+        return False
+
 @require_http_methods(["POST"])
 def generate_quote(request):
+    """Generate and email PDF quote with company branding."""
     try:
-        logger.info("Iniciando generación de cotización")
+        logger.info("=" * 50)
+        logger.info("INICIANDO GENERACIÓN DE COTIZACIÓN")
+        logger.info("=" * 50)
         
         if not request.user.is_authenticated:
+            logger.warning("Usuario no autenticado")
             return redirect('login')
             
         if not request.user.company:
+            logger.warning("Usuario no asociado a una empresa")
             return render(request, 'quote/error.html', {
                 'error': 'Usuario no asociado a una empresa'
             })
 
-        # Collect project data including volumes
+        logger.info("INFORMACIÓN DEL USUARIO:")
+        logger.info(f"Username: {request.user.username}")
+        logger.info(f"Email: {request.user.email}")
+        logger.info(f"Empresa: {request.user.company.name}")
+        logger.info(f"Email de contacto empresa: {request.user.company.contact_email}")
+        logger.info("-" * 50)
+
+        # Collect project data
+        logger.info("DATOS DEL FORMULARIO POST:")
+        for key, value in request.POST.items():
+            logger.info(f"{key}: {value}")
+        logger.info("-" * 50)
+
         project_data = {
             'project_name': request.POST.get('project_name', 'New Project'),
             'components': request.POST.getlist('components[]'),
             'materials': request.POST.getlist('materials[]'),
-            'quantities': request.POST.getlist('quantities[]'),
-            'volumes': request.POST.getlist('volumes[]')
+            'quantities': request.POST.getlist('quantities[]')
         }
+        
+        logger.info("DATOS DEL PROYECTO PROCESADOS:")
+        logger.info(f"Nombre del proyecto: {project_data['project_name']}")
+        logger.info(f"Número de componentes: {len(project_data['components'])}")
+        logger.info("Detalles de componentes:")
+        for i, (comp, mat, qty) in enumerate(zip(
+            project_data['components'],
+            project_data['materials'],
+            project_data['quantities']
+        )):
+            logger.info(f"  {i+1}. Componente: {comp}, Material: {mat}, Cantidad: {qty}")
+        logger.info("-" * 50)
 
-        # Get material densities
-        material_densities = {
-            material.material_type: material.density 
-            for material in MaterialDensity.objects.all()
-        }
+        # Generate PDF
+        logger.info("Iniciando generación del PDF...")
+        quote_generator = QuoteGenerator(request.user, project_data)
+        pdf_content = quote_generator.generate_pdf()
+        logger.info("PDF generado exitosamente")
 
-        # Generate customer PDF
-        customer_quote_generator = QuoteGenerator(request.user, project_data, is_internal=False)
-        customer_pdf_content = customer_quote_generator.generate_pdf()
-
-        # Generate internal PDF
-        internal_quote_generator = QuoteGenerator(request.user, project_data, is_internal=True)
-        internal_pdf_content = internal_quote_generator.generate_pdf()
-
-        # Send emails with appropriate PDFs
+        # Send emails
+        logger.info("Iniciando envío de correos...")
+        logger.info(f"Email configurado en settings: {settings.INTERNAL_QUOTE_EMAIL}")
         email_sent = send_quote_email(
-            customer_pdf_content,  # PDF para el cliente
-            internal_pdf_content,  # PDF para uso interno
+            pdf_content,
             project_data['project_name'],
             request.user.company.contact_email,
-            settings.INTERNAL_QUOTE_EMAIL,
-            project_data,
-            request.user.company,
-            material_densities
+            settings.INTERNAL_QUOTE_EMAIL
         )
+        logger.info(f"Resultado del envío de correo: {'Exitoso' if email_sent else 'Fallido'}")
 
         if email_sent:
             return JsonResponse({

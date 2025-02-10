@@ -305,7 +305,7 @@ class QuoteGenerator:
         self._create_info_tables(company_info, quote_info)
 
     def calculate_component_costs(self):
-        """Calculate costs for all components considering material weight."""
+        """Calculate costs for all components considering material weight and price per pound."""
         costs_data = []
         total_volume = 0
         total_weight = 0
@@ -317,12 +317,13 @@ class QuoteGenerator:
             self.project_data['quantities'],
             self.project_data['volumes']
         ):
+            # Convert string values to float
             volume = float(vol)
-            quantity = float(qty)
+            quantity = int(qty)
             
             # Get material density and calculate weight
             density = self.material_densities.get(mat, 0.284)  # Default density if not found
-            weight = volume * density
+            weight = volume * density  # Weight per unit in pounds
             
             # Get appropriate price per pound based on material
             if mat == 'stainless_steel':
@@ -333,9 +334,9 @@ class QuoteGenerator:
                 # Default to carbon steel price for unknown materials
                 price_per_pound = float(self.company.carbon_steel_price)
             
-            # Calculate costs based on weight
-            unit_cost = weight * price_per_pound
-            total_item_cost = unit_cost * quantity
+            # Calculate costs
+            unit_material_cost = weight * price_per_pound  # Cost for one unit based on its weight
+            total_item_cost = unit_material_cost * quantity  # Total cost for all units of this component
             
             # Update totals
             total_volume += volume * quantity
@@ -348,8 +349,8 @@ class QuoteGenerator:
                 'quantity': quantity,
                 'volume': volume,
                 'weight': weight,
-                'unit_cost': unit_cost,
-                'total_cost': total_item_cost,
+                'unit_cost': unit_material_cost,  # Cost per single unit
+                'total_cost': total_item_cost,    # Cost for all units
                 'price_per_pound': price_per_pound
             })
         
@@ -366,16 +367,8 @@ class QuoteGenerator:
                 item['component'],
                 item['material'].replace('_', ' ').title(),
                 f"{item['quantity']:,.0f}",
-                #f"${item['total_cost']:,.2f}"
             ])
-        
-        # Add total row
-        # items_data.append([
-        #     'TOTAL',
-        #     '',
-        #     '',
-        #     f"${total_cost:,.2f}"
-        # ])
+
 
         components_table = Table(items_data, colWidths=[2.5*inch, 2*inch, 1.5*inch, 1.5*inch])
         components_table.setStyle(TableStyle([

@@ -194,6 +194,11 @@ class QuoteGenerator:
         self.styles = getSampleStyleSheet()
         self.is_internal = is_internal  # Flag para diferenciar el tipo de PDF
         self.setup_custom_styles()
+    
+        self.material_densities = {
+            material.material_type: material.density 
+            for material in MaterialDensity.objects.all()
+        }
 
     def setup_custom_styles(self):
         self.title_style = ParagraphStyle(
@@ -236,20 +241,15 @@ class QuoteGenerator:
 
     def _add_project_summary(self):
         """Add project summary section to the PDF."""
-        # Calculate total price
-        total_price = 0
-        for mat, qty in zip(self.project_data['materials'], self.project_data['quantities']):
-            unit_price = (
-                float(self.company.stainless_steel_price) if mat == 'stainless_steel'
-                else float(self.company.carbon_steel_price)
-            )
-            total_price += unit_price * float(qty)
-
+        # Calculate costs using the new calculation method
+        costs_data, total_volume, total_weight, total_cost = self.calculate_component_costs()
+        
         # Create summary data
         summary_data = [
             ['Project Summary'],
             [f'Total Components: {len(self.project_data["components"])}'],
-            [f'Total Price: ${total_price:,.2f} USD'],
+            [f'Total Weight: {total_weight:,.2f} lbs'],
+            [f'Total Price: ${total_cost:,.2f} USD'],
             ['Material Distribution:'],
         ]
         
@@ -304,6 +304,94 @@ class QuoteGenerator:
 
         self._create_info_tables(company_info, quote_info)
 
+    def calculate_component_costs(self):
+        """Calculate costs for all components considering material weight."""
+        costs_data = []
+        total_volume = 0
+        total_weight = 0
+        total_cost = 0
+
+        for comp, mat, qty, vol in zip(
+            self.project_data['components'],
+            self.project_data['materials'],
+            self.project_data['quantities'],
+            self.project_data['volumes']
+        ):
+            volume = float(vol)
+            quantity = float(qty)
+            
+            # Get material density and calculate weight
+            density = self.material_densities.get(mat, 0.284)  # Default density if not found
+            weight = volume * density
+            
+            # Get appropriate price per pound based on material
+            if mat == 'stainless_steel':
+                price_per_pound = float(self.company.stainless_steel_price)
+            elif mat == 'carbon_steel':
+                price_per_pound = float(self.company.carbon_steel_price)
+            else:
+                # Default to carbon steel price for unknown materials
+                price_per_pound = float(self.company.carbon_steel_price)
+            
+            # Calculate costs based on weight
+            unit_cost = weight * price_per_pound
+            total_item_cost = unit_cost * quantity
+            
+            # Update totals
+            total_volume += volume * quantity
+            total_weight += weight * quantity
+            total_cost += total_item_cost
+            
+            costs_data.append({
+                'component': comp,
+                'material': mat,
+                'quantity': quantity,
+                'volume': volume,
+                'weight': weight,
+                'unit_cost': unit_cost,
+                'total_cost': total_item_cost,
+                'price_per_pound': price_per_pound
+            })
+        
+        return costs_data, total_volume, total_weight, total_cost
+
+    def _add_customer_components_table(self):
+        """Simplified table for customer view"""
+        costs_data, _, _, total_cost = self.calculate_component_costs()
+        
+        items_data = [['Component', 'Material', 'Quantity']]
+        
+        for item in costs_data:
+            items_data.append([
+                item['component'],
+                item['material'].replace('_', ' ').title(),
+                f"{item['quantity']:,.0f}",
+                #f"${item['total_cost']:,.2f}"
+            ])
+        
+        # Add total row
+        # items_data.append([
+        #     'TOTAL',
+        #     '',
+        #     '',
+        #     f"${total_cost:,.2f}"
+        # ])
+
+        components_table = Table(items_data, colWidths=[2.5*inch, 2*inch, 1.5*inch, 1.5*inch])
+        components_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('PADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.grey),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ]))
+        self.elements.append(components_table)
+
     def _create_info_tables(self, company_info, quote_info):
         left_table = Table(company_info, colWidths=[1.5*inch, 3*inch])
         right_table = Table(quote_info, colWidths=[1.5*inch, 2*inch])
@@ -336,80 +424,35 @@ class QuoteGenerator:
         else:
             self._add_customer_components_table()
 
-    def _add_customer_components_table(self):
-        """Tabla simplificada para el cliente"""
-        items_data = [['Component', 'Material', 'Quantity']]
-        
-        for comp, mat, qty in zip(
-            self.project_data['components'],
-            self.project_data['materials'],
-            self.project_data['quantities']
-        ):
-            items_data.append([
-                comp,
-                mat.replace('_', ' ').title(),
-                qty
-            ])
-
-        components_table = Table(items_data, colWidths=[3*inch, 2.5*inch, 2*inch])
-        components_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.black),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('PADDING', (0, 0), (-1, -1), 12),
-        ]))
-        self.elements.append(components_table)
 
     def _add_internal_components_table(self):
-        """Tabla detallada para uso interno"""
-        items_data = [['Component', 'Material', 'Quantity', 'Volume (in³)', 'Weight (lbs)', 'Unit Cost', 'Total Cost']]
+        """Detailed table for internal use"""
+        costs_data, total_volume, total_weight, total_cost = self.calculate_component_costs()
         
-        total_volume = 0
-        total_weight = 0
-        total_cost = 0
-
-        material_densities = {
-            material.material_type: material.density 
-            for material in MaterialDensity.objects.all()
-        }
-
-        for comp, mat, qty, vol in zip(
-            self.project_data['components'],
-            self.project_data['materials'],
-            self.project_data['quantities'],
-            self.project_data['volumes']
-        ):
-            volume = float(vol)
-            quantity = float(qty)
-            
-            unit_price = (
-                float(self.company.stainless_steel_price)
-                if mat == 'stainless_steel'
-                else float(self.company.carbon_steel_price)
-            )
-            
-            density = material_densities.get(mat, 0.284)
-            weight = volume * density
-            
-            total_item_cost = unit_price * quantity
-            
-            total_volume += volume * quantity
-            total_weight += weight * quantity
-            total_cost += total_item_cost
-            
+        items_data = [[
+            'Component', 
+            'Material', 
+            'Quantity',
+            'Volume (in³)',
+            'Weight (lbs)',
+            'Price/lb',
+            'Unit Cost',
+            'Total Cost'
+        ]]
+        
+        for item in costs_data:
             items_data.append([
-                comp,
-                mat.replace('_', ' ').title(),
-                f"{quantity:,.0f}",
-                f"{volume:,.2f}",
-                f"{weight:,.2f}",
-                f"${unit_price:,.2f}",
-                f"${total_item_cost:,.2f}"
+                item['component'],
+                item['material'].replace('_', ' ').title(),
+                f"{item['quantity']:,.0f}",
+                f"{item['volume']:,.2f}",
+                f"{item['weight']:,.2f}",
+                f"${item['price_per_pound']:,.2f}",
+                f"${item['unit_cost']:,.2f}",
+                f"${item['total_cost']:,.2f}"
             ])
-
+        
+        # Add totals row
         items_data.append([
             'TOTALS',
             '',
@@ -417,12 +460,13 @@ class QuoteGenerator:
             f"{total_volume:,.2f}",
             f"{total_weight:,.2f}",
             '',
+            '',
             f"${total_cost:,.2f}"
         ])
 
         components_table = Table(
-            items_data, 
-            colWidths=[2*inch, 1.5*inch, 0.8*inch, 1*inch, 1*inch, 1*inch, 1*inch]
+            items_data,
+            colWidths=[1.5*inch, 1.2*inch, 0.7*inch, 0.9*inch, 0.9*inch, 0.8*inch, 0.8*inch, 0.9*inch]
         )
         
         table_style = TableStyle([

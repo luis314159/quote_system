@@ -1,41 +1,62 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Grupo Arga - STEP Analysis{% endblock %}</title>
+    <!-- Leaflet CSS y JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Tailwind y Font Awesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     {% load static %}
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-50">
     <!-- Navbar -->
     <nav class="bg-white shadow">
-        <div class="max-w-full mx-auto px-8 sm:px-12 lg:px-16">
-            <div class="flex justify-between h-16">
-                <!-- Left side - Logo and company name -->
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-center justify-between">
+                <!-- Logo y nombre de la empresa -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
                         <a href="{% url 'quote:home' %}" class="flex items-center">
-                            <img class="h-16 w-auto" src="{% static 'quote/images/logo.jpg' %}" alt="Grupo Arga Logo">
-                            <span class="ml-2 text-xl font-semibold text-gray-800">Automatic Quote System</span>
+                            <img class="h-12 sm:h-16 w-auto" src="{% static 'quote/images/logo.jpg' %}" alt="Grupo Arga Logo">
+                            <span class="ml-2 text-lg sm:text-xl font-semibold text-gray-800">
+                                Automatic Quote System
+                            </span>
                         </a>
                     </div>
                 </div>
 
-                <!-- Right side - Navigation -->
+                <!-- Navegación Desktop -->
                 <div class="hidden sm:flex sm:items-center">
                     <div class="flex items-center space-x-4">
                         <a href="{% url 'quote:home' %}" 
-                        class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
+                           class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 
+                                  hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
                             <i class="fas fa-home mr-2"></i> Home
                         </a>
                         <a href="{% url 'quote:about' %}" 
-                        class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
+                           class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 
+                                  hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
                             <i class="fas fa-info-circle mr-2"></i> About Us
                         </a>
                         <a href="{% url 'quote:upload' %}" 
-                        class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
+                           class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 
+                                  hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
                             <i class="fas fa-file-invoice-dollar mr-2"></i> Quote System
                         </a>
                         
@@ -53,7 +74,7 @@
                             </div>
                             <div class="h-8 w-px bg-gray-200"></div>
                             <a href="{% url 'session:logout' %}" 
-                            class="flex items-center px-3 py-2 text-red-600 hover:text-red-700 transition duration-150 ease-in-out">
+                               class="flex items-center px-3 py-2 text-red-600 hover:text-red-700 transition duration-150 ease-in-out">
                                 <i class="fas fa-sign-out-alt"></i>
                             </a>
                         </div>
@@ -61,33 +82,38 @@
                     </div>
                 </div>
 
-                <!-- Mobile menu button -->
+                <!-- Botón Menú Móvil -->
                 <div class="flex items-center sm:hidden">
                     <button type="button" 
-                            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 
+                                   hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 
+                                   focus:ring-inset focus:ring-blue-500"
                             aria-controls="mobile-menu"
                             aria-expanded="false"
-                            onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-                        <span class="sr-only">Open main menu</span>
+                            onclick="toggleMobileMenu()">
+                        <span class="sr-only">Abrir menú principal</span>
                         <i class="fas fa-bars h-6 w-6"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Mobile menu -->
+        <!-- Menú Móvil -->
         <div class="sm:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <a href="{% url 'quote:home' %}" 
-                class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                   class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 
+                          hover:text-gray-900 hover:bg-gray-100">
                     <i class="fas fa-home mr-2"></i> Home
                 </a>
                 <a href="{% url 'quote:about' %}" 
-                class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                   class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 
+                          hover:text-gray-900 hover:bg-gray-100">
                     <i class="fas fa-info-circle mr-2"></i> About Us
                 </a>
                 <a href="{% url 'quote:upload' %}" 
-                class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                   class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 
+                          hover:text-gray-900 hover:bg-gray-100">
                     <i class="fas fa-file-invoice-dollar mr-2"></i> Quote System
                 </a>
                 {% if user.is_authenticated %}
@@ -104,7 +130,8 @@
                         </div>
                     </div>
                     <a href="{% url 'session:logout' %}" 
-                    class="flex items-center justify-center mt-2 px-3 py-2 border border-gray-200 text-red-600 hover:bg-gray-50 hover:text-red-700 rounded-md">
+                       class="flex items-center justify-center mt-2 px-3 py-2 border border-gray-200 text-red-600 
+                              hover:bg-gray-50 hover:text-red-700 rounded-md">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </a>
                 </div>
@@ -113,9 +140,9 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- Contenido Principal -->
     <main class="flex-grow">
-        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             {% block content %}
             {% endblock %}
         </div>
@@ -123,7 +150,7 @@
 
     <!-- Footer -->
     <footer class="bg-white shadow">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
             <div class="flex justify-center items-center">
                 <div class="text-center">
                     <p class="text-sm text-gray-500">
@@ -134,7 +161,7 @@
         </div>
     </footer>
 
-    <!-- Notification area for messages -->
+    <!-- Notificaciones -->
     {% if messages %}
     <div class="fixed bottom-5 right-5">
         {% for message in messages %}

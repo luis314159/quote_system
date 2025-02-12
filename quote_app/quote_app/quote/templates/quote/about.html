@@ -2,9 +2,10 @@
 {% load static %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="relative bg-gradient-to-r from-[#053c57] to-[#2d2b2d]">
-    <div class="max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
+<!-- Sección Hero: fondo ancho con gradiente y onda -->
+<div class="w-full relative bg-gradient-to-r from-[#053c57] to-[#383638]">
+    <!-- Contenedor centrado para texto -->
+    <div class="max-w-screen-2xl mx-auto py-12 sm:py-16 md:py-24 px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
                 Global Manufacturing Excellence
@@ -14,24 +15,158 @@
             </p>
         </div>
     </div>
+    <!-- Onda posicionada al fondo -->
     <div class="absolute bottom-0 w-full">
         <svg class="w-full h-24" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,74L1320,74C1200,74,960,74,720,74C480,74,240,74,120,74L0,74Z" fill="white"/>
+            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,74L1320,74C1200,74,960,74,720,74C480,74,240,74,120,74L0,74Z" fill="white" />
         </svg>
     </div>
 </div>
 
 <!-- Company Overview Section -->
-<div class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="w-full py-16 bg-white">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="lg:text-center">
             <p class="text-3xl leading-8 font-extrabold tracking-tight text-[#2d2b2d] sm:text-4xl">
-                Our Story
+                Who we are
             </p>
-            <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-                Founded in 2012, Grupo Arga Metals has grown to become a leading metal manufacturing company, strategically located in Chihuahua, Mexico, serving both Mexican and US markets.
+            <p class="mt-4 max-w mx-auto text-xl text-gray-500">
+                GRUPO ARGA METALS belongs to an industrial holding (GRUPO
+                ARGA) and is strategically located in the North of Mexico to serve
+                Mexico and USA. 250 miles from El Paso, Tx (3.5 hrs transit time
+                from Chihuahua to ELP).
+                We have the Experience, Equipment, Qualified labor force and
+                Certifications required to Manufacture any parts for the general
+                Metal Mechanic Industry.
+                Our products as of now is 100% exported to the USA
             </p>
         </div>
+
+
+<!-- Map Section -->
+<div class="w-full py-16 bg-white">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+                Our Location
+            </h2>
+            <p class="mt-4 text-lg text-gray-500">
+                Strategically located to serve both Mexican and US markets
+            </p>
+        </div>
+        
+        <!-- Mapa -->
+        <div class="mt-12">
+            <div id="hs-grayscale-leaflet" class="h-[400px] hs-leaflet z-10 rounded-lg shadow-lg"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos del mapa -->
+<style>
+    .hs-leaflet.leaflet-touch .leaflet-control-layers,
+    .hs-leaflet.leaflet-touch .leaflet-bar {
+        border-width: 0px;
+    }
+    .hs-leaflet.leaflet-touch .leaflet-bar a {
+        line-height: 1.5;
+        background-color: rgba(255,255,255,.8);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    .hs-leaflet.leaflet-touch .leaflet-bar a:first-child,
+    .hs-leaflet.leaflet-touch .leaflet-bar a:last-child {
+        border-radius: 8px;
+    }
+    .hs-leaflet .leaflet-control-zoom-in,
+    .hs-leaflet .leaflet-control-zoom-out {
+        font-weight: 400;
+        font-size: 18px;
+        color: #1f2937;
+        text-indent: 0px;
+    }
+    .hs-leaflet .leaflet-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .hs-leaflet .leaflet-bar a {
+        border-width: 0;
+    }
+    .hs-leaflet .leaflet-bar a:hover,
+    .hs-leaflet .leaflet-bar a:focus {
+        background-color: #e5e7eb;
+    }
+    .hs-leaflet .leaflet-popup-content-wrapper,
+    .hs-leaflet .leaflet-popup-tip {
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .hs-leaflet .leaflet-popup-tip {
+        border-radius: 4px;
+    }
+    .hs-leaflet.leaflet-container a.leaflet-popup-close-button {
+        top: -10px;
+        right: -10px;
+        border-radius: 9999px;
+        background-color: #f3f4f6;
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .hs-leaflet.leaflet-container a.leaflet-popup-close-button:hover {
+        background-color: #f3f4f6;
+    }
+    .hs-leaflet-unstyled-popover .leaflet-popup-content-wrapper {
+        display: flex;
+    }
+    .hs-leaflet-unstyled-popover .leaflet-popup-content {
+        padding: 0;
+        margin: 0;
+        background: none;
+        line-height: normal;
+        border-radius: 0;
+        font-size: inherit;
+        min-height: auto;
+    }
+</style>
+<!-- Script del mapa -->
+<script>
+    window.addEventListener('load', () => {
+        (function () {
+            const map = L.map('hs-grayscale-leaflet', {
+                center: [28.67614, -106.00391],  // Coordenadas de Chihuahua
+                zoom: 10,
+                maxBounds: [
+                    [25, -110],
+                    [32, -102]
+                ],
+                maxBoundsViscosity: 1.0
+            });
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                minZoom: 5,
+               
+            }).addTo(map);
+            
+            L.marker([28.67614, -106.00391])
+                .bindPopup('<strong>Grupo Arga</strong><br>Calle Valle de Aldama y Libramiento Oriente 24302<br>Rancho de Enmedio, 31376<br>Chihuahua, Chih.')
+                .addTo(map);
+        })();
+    });
+</script>
+
+
+
+
+
+<h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+    <div class="lg:text-center">
+    Why us
+    
+</h2>
+        
+
+
 
         <div class="mt-16">
             <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -42,7 +177,8 @@
                             <div class="flex-shrink-0">
                                 <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
                                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                 </div>
                             </div>
@@ -51,7 +187,8 @@
                             </div>
                         </div>
                         <div class="mt-4 text-base text-gray-500">
-                            Offer comprehensive engineering, manufacturing and service solutions, meeting the standards, requirements and quality expected by our customers.
+                            Offer comprehensive engineering, manufacturing and service solutions, meeting the standards,
+                            requirements and quality expected by our customers.
                         </div>
                     </div>
                 </div>
@@ -63,8 +200,10 @@
                             <div class="flex-shrink-0">
                                 <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
                                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                 </div>
                             </div>
@@ -85,7 +224,8 @@
                             <div class="flex-shrink-0">
                                 <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
                                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
                                 </div>
                             </div>
@@ -110,9 +250,10 @@
     </div>
 </div>
 
+
 <!-- Capabilities Section -->
 <div class="bg-gray-50 py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
                 Our Capabilities
@@ -175,56 +316,4 @@
     </div>
 </div>
 
-<!-- Facility Section -->
-<div class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
-                Our Facility
-            </h2>
-            <p class="mt-4 text-lg text-gray-500">
-                108,000 sq ft facility with 86,500 sq ft dedicated to manufacturing
-            </p>
-        </div>
-
-        <div class="mt-12">
-            <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div class="px-6 py-8">
-                        <h3 class="text-lg font-medium text-[#2d2b2d]">Strategic Location</h3>
-                        <p class="mt-4 text-gray-500">
-                            Located in Chihuahua, Mexico, just 250 miles from El Paso, TX with 3.5 hrs transit time, providing efficient access to US markets.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div class="px-6 py-8">
-                        <h3 class="text-lg font-medium text-[#2d2b2d]">Workforce</h3>
-                        <p class="mt-4 text-gray-500">
-                            415 skilled employees working across two shifts, supported by complete transportation services and modern facilities.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Contact CTA -->
-<div class="bg-[#053c57]">
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-        <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            <span class="block">Ready to get started?</span>
-            <span class="block text-gray-200">Contact us today for a consultation.</span>
-        </h2>
-        <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-            <div class="inline-flex rounded-md shadow">
-                <a href="{% url 'quote:contact' %}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-[#053c57] bg-white hover:bg-gray-50">
-                    Contact Us
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

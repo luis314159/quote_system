@@ -19,7 +19,10 @@ from django.views.decorators.http import require_http_methods
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from .models import MaterialDensity
+from .models import (
+    MaterialDensity, Company, CompanyMaterialPrice, 
+    CompanyFinishPrice, Finish
+)
 from utils.step_analyzer import analyze_step_file
 
 # Configurar logging
@@ -104,19 +107,36 @@ def results(request: HttpRequest):
         # Obtener y loguear los precios de la empresa
         company = request.user.company
         company_prices = {
-            'stainless_steel': company.stainless_steel_price,
-            'carbon_steel': company.carbon_steel_price
+            price.material.material_type: float(price.price_per_lb)
+            for price in CompanyMaterialPrice.objects.filter(
+                company=company,
+                is_active=True
+            )
         }
         logger.debug(f"Company prices for {company.name}: {company_prices}")
+
+        # Obtener acabados disponibles y sus precios
+        finish_prices = {
+            price.finish.name: float(price.price_multiplier)
+            for price in CompanyFinishPrice.objects.filter(
+                company=company,
+                is_active=True
+            )
+        }
+        logger.debug(f"Company finish prices: {finish_prices}")
         
         # Preparar y loguear el contexto
         context = {
             'table_data': df.to_dict('records'),
             'material_densities': material_densities,
-            'company_prices': {
-                'stainless_steel': float(company.stainless_steel_price),
-                'carbon_steel': float(company.carbon_steel_price)
-            }
+            'company_prices': company_prices,
+            'finish_prices': finish_prices,
+            'available_finishes': [
+                {'id': f.id, 'name': f.name} 
+                for f in company.finishes.filter(
+                    company_prices__is_active=True
+                )
+            ]
         }
         logger.debug(f"Context prepared for rendering: {context}")
         
@@ -311,6 +331,15 @@ class QuoteGenerator:
         total_weight = 0
         total_cost = 0
 
+        # Obtener precios de materiales para la empresa
+        company_prices = {
+            price.material.material_type: float(price.price_per_lb)
+            for price in CompanyMaterialPrice.objects.filter(
+                company=self.company,
+                is_active=True
+            )
+        }
+
         for comp, mat, qty, vol in zip(
             self.project_data['components'],
             self.project_data['materials'],
@@ -325,18 +354,29 @@ class QuoteGenerator:
             density = self.material_densities.get(mat, 0.284)  # Default density if not found
             weight = volume * density  # Weight per unit in pounds
             
-            # Get appropriate price per pound based on material
-            if mat == 'stainless_steel':
-                price_per_pound = float(self.company.stainless_steel_price)
-            elif mat == 'carbon_steel':
-                price_per_pound = float(self.company.carbon_steel_price)
-            else:
-                # Default to carbon steel price for unknown materials
-                price_per_pound = float(self.company.carbon_steel_price)
+            # Get price per pound for this material
+            price_per_pound = company_prices.get(mat)
+            if price_per_pound is None:
+                # Si no hay precio específico, usamos un precio por defecto o manejamos el error
+                logger.warning(f"No price found for material {mat} in company {self.company.name}")
+                continue
             
             # Calculate costs
             unit_material_cost = weight * price_per_pound  # Cost for one unit based on its weight
             total_item_cost = unit_material_cost * quantity  # Total cost for all units of this component
+            
+            # Add finish multiplier if specified in project_data
+            finish = self.project_data.get('finishes', {}).get(comp)
+            if finish:
+                try:
+                    finish_price = CompanyFinishPrice.objects.get(
+                        company=self.company,
+                        finish__name=finish,
+                        is_active=True
+                    )
+                    total_item_cost *= float(finish_price.price_multiplier)
+                except CompanyFinishPrice.DoesNotExist:
+                    logger.warning(f"No finish price found for {finish} in company {self.company.name}")
             
             # Update totals
             total_volume += volume * quantity
@@ -351,11 +391,13 @@ class QuoteGenerator:
                 'weight': weight,
                 'unit_cost': unit_material_cost,  # Cost per single unit
                 'total_cost': total_item_cost,    # Cost for all units
-                'price_per_pound': price_per_pound
+                'price_per_pound': price_per_pound,
+                'finish': finish
             })
-        
+    
         return costs_data, total_volume, total_weight, total_cost
-
+    
+    
     def _add_customer_components_table(self):
         """Simplified table for customer view"""
         costs_data, _, _, total_cost = self.calculate_component_costs()

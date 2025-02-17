@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load quote_filters %}
 
 {% block content %}
-<!-- Estilos para el spinner -->
+<!-- Estilos para el spinner permanecen igual -->
 <style>
   .loader {
     border: 16px solid #f3f3f3;
@@ -28,7 +29,7 @@
   <form method="POST" action="{% url 'quote:generate_quote' %}" id="quoteForm">
     {% csrf_token %}
 
-    <!-- Project Information -->
+    <!-- Project Information permanece igual -->
     <div class="mb-8 bg-white shadow-md rounded-lg p-6">
       <h2 class="text-xl font-semibold mb-4">Project Information</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -50,9 +51,13 @@
           >
             <option value="">No finish</option>
             {% for finish in available_finishes %}
-              <option value="{{ finish.name }}">{{ finish.name }}</option>
+              <option value="{{ finish.name }}" 
+                data-multiplier="{{ finish_prices|get_dict_item:finish.name|default:'1.0' }}">
+                {{ finish.name }}
+              </option>
             {% endfor %}
           </select>
+          <input type="hidden" name="finish_multiplier" id="finish_multiplier" value="1.0">
         </div>
       </div>
     </div>
@@ -69,90 +74,82 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           {% for item in table_data %}
+          <!-- Dentro de cada fila de la tabla -->
           <tr class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ item.component }}
-              <input type="hidden" name="components[]" value="{{ item.component }}">
+                {{ item.component }}
+                <input type="hidden" name="components[]" value="{{ item.component }}">
+                <input type="hidden" name="volumes[]" value="{{ item.volume }}">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <div class="flex flex-col gap-2">
-                <div class="flex gap-4">
-                  <label class="inline-flex items-center">
-                    <input type="radio"
-                           name="materials[{{ forloop.counter0 }}]"
-                           value="stainless_steel"
-                           class="material-radio form-radio text-blue-600"
-                           {% if item.material == "stainless_steel" %}checked{% endif %}
-                           required>
-                    <span class="ml-2">Stainless Steel</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="radio"
-                           name="materials[{{ forloop.counter0 }}]"
-                           value="carbon_steel"
-                           class="material-radio form-radio text-blue-600"
-                           {% if item.material == "carbon_steel" %}checked{% endif %}>
-                    <span class="ml-2">Carbon Steel</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="radio"
-                           name="materials[{{ forloop.counter0 }}]"
-                           value="other"
-                           class="material-radio form-radio text-blue-600"
-                           {% if item.material and item.material != "stainless_steel" and item.material != "carbon_steel" %}checked{% endif %}>
-                    <span class="ml-2">Other</span>
-                  </label>
+                <div class="flex flex-col gap-2">
+                    <div class="flex flex-wrap gap-4">
+                        {% for material in available_materials %}
+                        <label class="inline-flex items-center">
+                            <input type="radio"
+                                  name="material_{{ forloop.parentloop.counter0 }}"
+                                  value="{{ material.id }}"
+                                  data-material-type="{{ material.material_type }}"
+                                  class="material-radio form-radio text-blue-600"
+                                  {% if item.material == material.material_type %}checked{% endif %}
+                                  required>
+                            <span class="ml-2">{{ material.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
                 </div>
-                <input type="text"
-                       name="custom_materials[{{ forloop.counter0 }}]"
-                       class="custom-material-input border rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       placeholder="Specify material"
-                       {% if item.material and item.material != "stainless_steel" and item.material != "carbon_steel" %}
-                       value="{{ item.material }}"
-                       {% else %}
-                       disabled
-                       {% endif %}>
-              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <input type="number" 
-                     name="quantities[]"
-                     class="quantity-input border rounded px-2 py-1 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                     value="{{ item.quantity|default:1 }}"
-                     min="1">
+                <input type="number" 
+                      name="quantities[]"
+                      class="quantity-input border rounded px-2 py-1 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value="{{ item.quantity|default:1 }}"
+                      min="1">
             </td>
           </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
 
-    <!-- Hidden Fields para datos extra -->
-    {% for item in table_data %}
-      <input type="hidden" name="volumes[]" value="{{ item.volume }}">
-      <input type="hidden" name="vertices[]" value="{{ item.vertices }}">
-      <input type="hidden" name="faces[]" value="{{ item.faces }}">
+          <!-- Campos ocultos fuera de la tabla -->
+          <div id="hiddenFields">
+            {% for item in table_data %}
+                <input type="hidden" 
+                      name="original_materials[]" 
+                      value="{{ item.material }}"
+                      data-index="{{ forloop.counter0 }}">
+                <input type="hidden" 
+                      name="vertices[]" 
+                      value="{{ item.vertices }}">
+                <input type="hidden" 
+                      name="faces[]" 
+                      value="{{ item.faces }}">
+            {% endfor %}
+          </div>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Hidden Fields permanecen igual -->
+              {% for item in table_data %}
+                <input type="hidden" name="volumes[]" value="{{ item.volume }}">
+                <input type="hidden" name="vertices[]" value="{{ item.vertices }}">
+                <input type="hidden" name="faces[]" value="{{ item.faces }}">
     {% endfor %}
 
     <!-- Bulk Material Selection -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
       <h3 class="text-lg font-semibold mb-4">Bulk Material Selection</h3>
       <div class="flex flex-col gap-4">
-        <div class="flex gap-4">
+        <div class="flex flex-wrap gap-4">
+          {% for material in available_materials %}
           <label class="inline-flex items-center">
             <input type="radio"
                    name="bulkMaterial"
-                   value="stainless_steel"
+                   value="{{ material.id }}"
+                   data-material-type="{{ material.material_type }}"
                    class="bulk-material-radio form-radio text-blue-600">
-            <span class="ml-2">Stainless Steel</span>
+            <span class="ml-2">{{ material.name }}</span>
           </label>
-          <label class="inline-flex items-center">
-            <input type="radio"
-                   name="bulkMaterial"
-                   value="carbon_steel"
-                   class="bulk-material-radio form-radio text-blue-600">
-            <span class="ml-2">Carbon Steel</span>
-          </label>
+          {% endfor %}
           <label class="inline-flex items-center">
             <input type="radio"
                    name="bulkMaterial"
@@ -189,20 +186,16 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Configuración del material por defecto
-    const DEFAULT_MATERIAL = 'carbon_steel';
-
-    // Aplicar material por defecto si no hay ninguno seleccionado
-    document.querySelectorAll('tr').forEach(tr => {
-        const radios = tr.querySelectorAll('.material-radio');
-        if (radios.length && ![...radios].some(r => r.checked)) {
-            const defaultRadio = tr.querySelector(`.material-radio[value="${DEFAULT_MATERIAL}"]`);
-            if (defaultRadio) defaultRadio.checked = true;
-        }
-    });
-
-    // Función para manejar la habilitación/deshabilitación de campos de texto personalizados
+  document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del DOM
+    const form = document.getElementById('quoteForm');
+    const projectFinishSelect = document.getElementById('project_finish');
+    const finishMultiplierInput = document.getElementById('finish_multiplier');
+    const bulkMaterialRadios = document.querySelectorAll('.bulk-material-radio');
+    const bulkCustomInput = document.getElementById('bulkCustomMaterial');
+    const bulkMaterialButton = document.getElementById('applyBulkMaterial');
+    
+    // Función para manejar inputs de material personalizado
     function handleCustomMaterialInput(radioButton) {
         const row = radioButton.closest('tr');
         if (row) {
@@ -216,28 +209,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Escuchar cambios en los radio buttons de material
+    // Event listeners para radios de material
     document.querySelectorAll('.material-radio').forEach(radio => {
         radio.addEventListener('change', function() {
             handleCustomMaterialInput(this);
+            console.log('Material seleccionado:', this.value);
         });
     });
 
-    // Manejar el campo de texto personalizado para la selección masiva
-    const bulkMaterialRadios = document.querySelectorAll('.bulk-material-radio');
-    const bulkCustomInput = document.getElementById('bulkCustomMaterial');
-
+    // Event listeners para radios de material en bulk
     bulkMaterialRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             bulkCustomInput.disabled = this.value !== 'other';
             if (this.value !== 'other') {
                 bulkCustomInput.value = '';
             }
+            console.log('Bulk material seleccionado:', this.value);
         });
     });
 
-    // Actualizar el manejador de selección masiva
-    const bulkMaterialButton = document.getElementById('applyBulkMaterial');
+    // Manejador para el botón de aplicar material en bulk
     if (bulkMaterialButton) {
         bulkMaterialButton.addEventListener('click', function() {
             const selectedMaterial = document.querySelector('input[name="bulkMaterial"]:checked');
@@ -252,91 +243,161 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            document.querySelectorAll('tr').forEach(tr => {
+            document.querySelectorAll('tbody tr').forEach(tr => {
                 const radios = tr.querySelectorAll('.material-radio');
                 const customInput = tr.querySelector('.custom-material-input');
                 
                 radios.forEach(radio => {
-                    radio.checked = radio.value === selectedMaterial.value;
-                    if (radio.checked && radio.value === 'other' && customInput) {
-                        customInput.disabled = false;
-                        customInput.value = customValue;
+                    if (radio.value === selectedMaterial.value) {
+                        radio.checked = true;
+                        if (radio.value === 'other' && customInput) {
+                            customInput.disabled = false;
+                            customInput.value = customValue;
+                        } else if (customInput) {
+                            customInput.disabled = true;
+                            customInput.value = '';
+                        }
                     }
                 });
             });
+            
+            console.log('Material aplicado en bulk:', selectedMaterial.value);
         });
     }
 
-    // Manejo del envío del formulario con spinner y respuesta
-    const form = document.getElementById('quoteForm');
+    // Manejo del acabado (finish)
+    if (projectFinishSelect) {
+        projectFinishSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const multiplier = selectedOption.dataset.multiplier || '1.0';
+            finishMultiplierInput.value = multiplier;
+            console.log('Acabado seleccionado:', this.value, 'Multiplicador:', multiplier);
+        });
+    }
+
+    // Manejo del envío del formulario
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        console.log('Iniciando envío del formulario...');
 
-        // Validación básica
-        const projectName = document.getElementById('project_name').value.trim();
-        if (!projectName) {
-            alert('Please enter a project name before generating the quote.');
-            return;
-        }
+        try {
+            // Validar nombre del proyecto
+            const projectName = document.getElementById('project_name').value.trim();
+            if (!projectName) {
+                alert('Please enter a project name before generating the quote.');
+                return;
+            }
 
-        // Recolectar y validar materiales
-        const materials = [];
-        let hasInvalidMaterial = false;
+            // Recolectar datos del formulario
+            const formData = new FormData(form);
+            
+            // Limpiar los arrays anteriores
+            ['materials[]', 'components[]', 'quantities[]', 'volumes[]'].forEach(name => {
+                formData.delete(name);
+            });
 
-        document.querySelectorAll('tr').forEach(tr => {
-            const checkedRadio = tr.querySelector('.material-radio:checked');
-            if (checkedRadio) {
-                if (checkedRadio.value === 'other') {
-                    const customInput = tr.querySelector('.custom-material-input');
-                    if (!customInput.value.trim()) {
-                        hasInvalidMaterial = true;
-                    }
+            // Recolectar datos de la tabla
+            const rows = document.querySelectorAll('tbody tr');
+            const data = {
+                materials: [],
+                components: [],
+                quantities: [],
+                volumes: []
+            };
+
+            rows.forEach((row, index) => {
+                // Obtener material seleccionado
+                const checkedRadio = row.querySelector('.material-radio:checked');
+                if (!checkedRadio) {
+                    throw new Error(`No material selected for component ${index + 1}`);
                 }
-                materials.push(checkedRadio.value);
+
+                // Procesar material
+                if (checkedRadio.value === 'other') {
+                    const customInput = row.querySelector('.custom-material-input');
+                    if (!customInput.value.trim()) {
+                        throw new Error(`Custom material not specified for component ${index + 1}`);
+                    }
+                    data.materials.push(customInput.value.trim());
+                } else {
+                    data.materials.push(checkedRadio.value);
+                }
+
+                // Obtener otros datos
+                const componentInput = row.querySelector('input[name="components[]"]');
+                const quantityInput = row.querySelector('input[name="quantities[]"]');
+                const volumeInput = row.querySelector('input[name="volumes[]"]');
+
+                if (!componentInput || !quantityInput || !volumeInput) {
+                    throw new Error(`Missing required fields for component ${index + 1}`);
+                }
+
+                data.components.push(componentInput.value);
+                data.quantities.push(quantityInput.value);
+                data.volumes.push(volumeInput.value);
+            });
+
+            // Verificar datos completos
+            const lengths = new Set([
+                data.materials.length,
+                data.components.length,
+                data.quantities.length,
+                data.volumes.length
+            ]);
+
+            if (lengths.size !== 1) {
+                throw new Error('Data arrays have different lengths');
             }
-        });
 
-        if (hasInvalidMaterial) {
-            alert('Please specify all custom materials before generating the quote.');
-            return;
+            // Agregar datos al FormData
+            Object.entries(data).forEach(([key, values]) => {
+                values.forEach(value => {
+                    formData.append(`${key}[]`, value);
+                });
+            });
+
+            // Log de verificación
+            console.log('Datos a enviar:', {
+                projectName: projectName,
+                projectFinish: formData.get('project_finish'),
+                materials: data.materials,
+                components: data.components,
+                quantities: data.quantities,
+                volumes: data.volumes
+            });
+
+            // Mostrar spinner
+            document.getElementById('spinner').style.display = 'flex';
+
+            // Enviar datos
+            fetch(form.getAttribute('action'), {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('spinner').style.display = 'none';
+                alert(data.message);
+                window.location.href = "{% url 'quote:home' %}";
+            })
+            .catch(error => {
+                document.getElementById('spinner').style.display = 'none';
+                console.error('Error en el envío:', error);
+                alert('Error generating quote. Please try again.');
+            });
+
+        } catch (error) {
+            console.error('Error en la validación:', error);
+            alert(error.message);
         }
-
-        if (materials.length !== document.querySelectorAll('tbody tr').length) {
-            alert('Please select materials for all components before generating the quote.');
-            return;
-        }
-
-        // Mostrar el spinner
-        document.getElementById('spinner').style.display = 'flex';
-
-        // Preparar los datos del formulario
-        const formData = new FormData(form);
-        const actionUrl = form.getAttribute('action');
-
-        // Enviar la petición mediante fetch
-        fetch(actionUrl, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('spinner').style.display = 'none';
-            alert(data.message);
-            window.location.href = "{% url 'quote:home' %}";
-        })
-        .catch(error => {
-            document.getElementById('spinner').style.display = 'none';
-            console.error('Error:', error);
-            alert('Error generating quote. Please try again.');
-        });
     });
 });
 </script>

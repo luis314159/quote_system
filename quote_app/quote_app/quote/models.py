@@ -36,33 +36,59 @@ class User(AbstractUser):
         ]
 
 
+from django.utils import timezone
+
 class MaterialDensity(models.Model):
     """Material densities and types"""
-    MATERIAL_CHOICES = [
-        ('stainless_steel', 'Acero Inoxidable'),
-        ('carbon_steel', 'Acero al Carbono'),
-    ]
-
     material_type = models.CharField(
         max_length=50,
-        choices=MATERIAL_CHOICES,
-        unique=True,
+        choices=[
+            ('stainless_steel', 'Acero Inoxidable'),
+            ('carbon_steel', 'Acero al Carbono'),
+        ],
+        null=True,  # Permitimos null temporalmente
+        blank=True,
         verbose_name="Tipo de Material"
+    )
+    name = models.CharField(
+        max_length=100,
+        null=True,  # Permitimos null temporalmente
+        blank=True,
+        verbose_name="Nombre del Material"
+    )
+    description = models.TextField(
+        verbose_name="Descripción",
+        blank=True,
+        help_text="Descripción opcional del material"
     )
     density = models.FloatField(
         verbose_name="Densidad (lb/in³)",
-        help_text="Ingrese la densidad en gramos por centímetro cúbico."
+        help_text="Ingrese la densidad en libras por pulgada cúbica"
     )
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Activo"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de Creación"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Última Actualización"
+    )
 
     def __str__(self):
+        if self.name:
+            return f"{self.name} - {self.density} lb/in³"
         return f"{self.get_material_type_display()} - {self.density} lb/in³"
 
     class Meta:
-        verbose_name = "Densidad de Material"
-        verbose_name_plural = "Densidades de Materiales"
+        verbose_name = "Material"
+        verbose_name_plural = "Materiales"
+        ordering = ['name']
 
-
+        
 class Finish(models.Model):
     """Available finishes for materials"""
     name = models.CharField("Nombre del Acabado", max_length=100, unique=True)

@@ -108,10 +108,19 @@ class RegistrationCodeAdmin(admin.ModelAdmin):
 
 @admin.register(MaterialDensity)
 class MaterialDensityAdmin(admin.ModelAdmin):
-    """Configuración del panel de admin para densidades de materiales."""
-    list_display = ('material_type', 'density', 'updated_at', 'view_companies_count')
-    list_filter = ('material_type',)
-    search_fields = ('material_type',)
+    """Configuración del panel de admin para materiales."""
+    list_display = ('name', 'density', 'is_active', 'updated_at', 'view_companies_count')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'description', 'density')
+        }),
+        ('Estado', {
+            'fields': ('is_active', 'created_at', 'updated_at')
+        }),
+    )
 
     def view_companies_count(self, obj):
         """Muestra la cantidad de empresas que usan este material"""

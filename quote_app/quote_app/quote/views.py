@@ -97,25 +97,25 @@ def results(request: HttpRequest):
         })
         logger.debug(f"Renamed DataFrame columns: {df.columns.tolist()}")
         
-        # Obtener y loguear las densidades de materiales
-        material_densities = {
-            material.material_type: material.density 
-            for material in MaterialDensity.objects.all()
-        }
-        logger.debug(f"Material densities: {material_densities}")
-        
-        # Obtener y loguear los precios de la empresa
         company = request.user.company
-        company_prices = {
-            price.material.material_type: float(price.price_per_lb)
-            for price in CompanyMaterialPrice.objects.filter(
-                company=company,
-                is_active=True
-            )
-        }
-        logger.debug(f"Company prices for {company.name}: {company_prices}")
-
-        # Obtener acabados disponibles y sus precios
+        
+        # Obtener materiales disponibles para la empresa con sus densidades y precios
+        available_materials = []
+        for material_price in CompanyMaterialPrice.objects.filter(
+            company=company,
+            is_active=True
+        ).select_related('material'):
+            material = material_price.material
+            available_materials.append({
+                'id': material.id,
+                'name': material.name or material.get_material_type_display(),
+                'material_type': material.material_type,
+                'density': material.density,
+                'price_per_lb': float(material_price.price_per_lb)
+            })
+        logger.debug(f"Available materials for company {company.name}: {available_materials}")
+        
+        # Obtener y loguear los acabados disponibles y sus precios
         finish_prices = {
             price.finish.name: float(price.price_multiplier)
             for price in CompanyFinishPrice.objects.filter(
@@ -128,8 +128,7 @@ def results(request: HttpRequest):
         # Preparar y loguear el contexto
         context = {
             'table_data': df.to_dict('records'),
-            'material_densities': material_densities,
-            'company_prices': company_prices,
+            'available_materials': available_materials,
             'finish_prices': finish_prices,
             'available_finishes': [
                 {'id': f.id, 'name': f.name} 
@@ -325,94 +324,112 @@ class QuoteGenerator:
         self._create_info_tables(company_info, quote_info)
 
     def calculate_component_costs(self):
-        """Calculate costs for all components considering material weight and price per pound."""
+        """Calculate costs for all components considering material weight, quantity and price per pound."""
         costs_data = []
         total_volume = 0
         total_weight = 0
         total_cost = 0
 
         # Obtener precios de materiales para la empresa
-        company_prices = {
-            price.material.material_type: float(price.price_per_lb)
-            for price in CompanyMaterialPrice.objects.filter(
+        material_prices = {
+            cp.material.id: {
+                'price_per_lb': float(cp.price_per_lb),
+                'density': cp.material.density,
+                'name': cp.material.name or cp.material.get_material_type_display()
+            }
+            for cp in CompanyMaterialPrice.objects.filter(
                 company=self.company,
                 is_active=True
-            )
+            ).select_related('material')
         }
 
-        for comp, mat, qty, vol in zip(
+        for comp, mat_id, qty, vol in zip(
             self.project_data['components'],
             self.project_data['materials'],
             self.project_data['quantities'],
             self.project_data['volumes']
         ):
-            # Convert string values to float
-            volume = float(vol)
-            quantity = int(qty)
-            
-            # Get material density and calculate weight
-            density = self.material_densities.get(mat, 0.284)  # Default density if not found
-            weight = volume * density  # Weight per unit in pounds
-            
-            # Get price per pound for this material
-            price_per_pound = company_prices.get(mat)
-            if price_per_pound is None:
-                # Si no hay precio específico, usamos un precio por defecto o manejamos el error
-                logger.warning(f"No price found for material {mat} in company {self.company.name}")
+            try:
+                # Convert values to appropriate types
+                volume = float(vol)
+                quantity = int(qty)
+                mat_id = int(mat_id)
+                
+                if mat_id not in material_prices:
+                    logger.warning(f"No price found for material ID {mat_id} in company {self.company.name}")
+                    continue
+                    
+                material_data = material_prices[mat_id]
+                
+                # Calculate weight using material density
+                weight = volume * material_data['density']  # Weight per unit in pounds
+                
+                # Calculate costs
+                unit_cost = weight * material_data['price_per_lb']  # Cost for one unit
+                subtotal = unit_cost * quantity  # Cost for all units of this component
+                
+                # Apply finish multiplier if specified
+                finish_name = self.project_data.get('project_finish')
+                finish_multiplier = 1.0
+                
+                if finish_name:
+                    try:
+                        finish_price = CompanyFinishPrice.objects.get(
+                            company=self.company,
+                            finish__name=finish_name,
+                            is_active=True
+                        )
+                        finish_multiplier = float(finish_price.price_multiplier)
+                        subtotal *= finish_multiplier
+                    except CompanyFinishPrice.DoesNotExist:
+                        logger.warning(f"No finish price found for {finish_name} in company {self.company.name}")
+                
+                # Update totals
+                total_volume += volume * quantity
+                total_weight += weight * quantity
+                total_cost += subtotal
+                
+                costs_data.append({
+                    'component': comp,
+                    'material': material_data['name'],
+                    'quantity': quantity,
+                    'volume': volume,
+                    'weight': weight,
+                    'unit_cost': unit_cost,
+                    'subtotal': subtotal,
+                    'price_per_pound': material_data['price_per_lb'],
+                    'finish_multiplier': finish_multiplier
+                })
+                
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error processing component {comp}: {str(e)}")
                 continue
-            
-            # Calculate costs
-            unit_material_cost = weight * price_per_pound  # Cost for one unit based on its weight
-            total_item_cost = unit_material_cost * quantity  # Total cost for all units of this component
-            
-            # Add finish multiplier if specified in project_data
-            finish = self.project_data.get('finishes', {}).get(comp)
-            if finish:
-                try:
-                    finish_price = CompanyFinishPrice.objects.get(
-                        company=self.company,
-                        finish__name=finish,
-                        is_active=True
-                    )
-                    total_item_cost *= float(finish_price.price_multiplier)
-                except CompanyFinishPrice.DoesNotExist:
-                    logger.warning(f"No finish price found for {finish} in company {self.company.name}")
-            
-            # Update totals
-            total_volume += volume * quantity
-            total_weight += weight * quantity
-            total_cost += total_item_cost
-            
-            costs_data.append({
-                'component': comp,
-                'material': mat,
-                'quantity': quantity,
-                'volume': volume,
-                'weight': weight,
-                'unit_cost': unit_material_cost,  # Cost per single unit
-                'total_cost': total_item_cost,    # Cost for all units
-                'price_per_pound': price_per_pound,
-                'finish': finish
-            })
-    
+        
         return costs_data, total_volume, total_weight, total_cost
+
     
     
     def _add_customer_components_table(self):
-        """Simplified table for customer view"""
-        costs_data, _, _, total_cost = self.calculate_component_costs()
+        """Simplified table for customer view - without unit costs"""
+        costs_data, _, total_weight, total_cost = self.calculate_component_costs()
         
         items_data = [['Component', 'Material', 'Quantity']]
         
         for item in costs_data:
             items_data.append([
                 item['component'],
-                item['material'].replace('_', ' ').title(),
-                f"{item['quantity']:,.0f}",
+                item['material'],
+                f"{item['quantity']:,d}"
             ])
+        
+        # Add totals row
+        items_data.append([
+            'TOTALS',
+            '',
+            '',
+        ])
 
-
-        components_table = Table(items_data, colWidths=[2.5*inch, 2*inch, 1.5*inch, 1.5*inch])
+        components_table = Table(items_data, colWidths=[3*inch, 2.5*inch, 2*inch])
         components_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.black),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -426,6 +443,7 @@ class QuoteGenerator:
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
         ]))
         self.elements.append(components_table)
+
 
     def _create_info_tables(self, company_info, quote_info):
         left_table = Table(company_info, colWidths=[1.5*inch, 3*inch])
@@ -461,30 +479,30 @@ class QuoteGenerator:
 
 
     def _add_internal_components_table(self):
-        """Detailed table for internal use"""
+        """Detailed table for internal use - includes all cost details"""
         costs_data, total_volume, total_weight, total_cost = self.calculate_component_costs()
         
         items_data = [[
             'Component', 
             'Material', 
-            'Quantity',
+            'Qty',
             'Volume (in³)',
-            'Weight (lbs)',
+            'Weight (lb)',
             'Price/lb',
             'Unit Cost',
-            'Total Cost'
+            'Subtotal'
         ]]
         
         for item in costs_data:
             items_data.append([
                 item['component'],
-                item['material'].replace('_', ' ').title(),
-                f"{item['quantity']:,.0f}",
+                item['material'],
+                f"{item['quantity']:,d}",
                 f"{item['volume']:,.2f}",
                 f"{item['weight']:,.2f}",
                 f"${item['price_per_pound']:,.2f}",
                 f"${item['unit_cost']:,.2f}",
-                f"${item['total_cost']:,.2f}"
+                f"${item['subtotal']:,.2f}"
             ])
         
         # Add totals row
@@ -501,7 +519,7 @@ class QuoteGenerator:
 
         components_table = Table(
             items_data,
-            colWidths=[1.5*inch, 1.2*inch, 0.7*inch, 0.9*inch, 0.9*inch, 0.8*inch, 0.8*inch, 0.9*inch]
+            colWidths=[1.2*inch, 1.2*inch, 0.6*inch, 0.9*inch, 0.9*inch, 0.8*inch, 0.9*inch, 1*inch]
         )
         
         table_style = TableStyle([
@@ -566,71 +584,27 @@ class QuoteGenerator:
         canvas.drawRightString(7.5*inch, 0.5*inch, f"Page {canvas.getPageNumber()}")
         canvas.restoreState()
 
-def send_quote_email(customer_pdf_content, internal_pdf_content, project_name, user_email, internal_email_addr, project_data, company, material_densities):
+def send_quote_email(customer_pdf_content, internal_pdf_content, project_name, user_email, internal_email_addr, project_data, company):
     """Send quote PDF to customer and internal email using direct SMTP."""
     try:
         logger.info("=" * 50)
         logger.info("INICIANDO PROCESO DE ENVÍO DE CORREO CON SMTP DIRECTO")
         logger.info("=" * 50)
 
-        # Preparar datos para las plantillas
-        components_data = []
-        total_volume = 0
-        total_weight = 0
-        total_cost = 0
-
-        for comp, mat, qty, vol in zip(
-            project_data['components'],
-            project_data['materials'],
-            project_data['quantities'],
-            project_data['volumes']
-        ):
-            # Calcular precio unitario según el material
-            unit_price = (
-                float(company.stainless_steel_price) 
-                if mat == 'stainless_steel'
-                else float(company.carbon_steel_price)
-            )
-            
-            # Calcular peso usando la densidad del material
-            density = material_densities.get(mat, 0.284)  # 0.284 lbs/in³ como valor por defecto
-            weight = float(vol) * density
-            
-            # Calcular costos
-            total_item_cost = unit_price * float(qty)
-            
-            components_data.append({
-                'component': comp,
-                'material': mat.replace('_', ' ').title(),
-                'quantity': qty,
-                'volume': float(vol),
-                'weight': weight,
-                'unit_cost': unit_price,
-                'total_cost': total_item_cost
-            })
-            
-            total_volume += float(vol) * float(qty)
-            total_weight += weight * float(qty)
-            total_cost += total_item_cost
-
-        # Contexto para las plantillas
-        email_context = {
-            'project_name': project_name,
-            'components': components_data,
-            'total_components': len(components_data),
-            'total_volume': total_volume,
-            'total_weight': total_weight,
-            'total_cost': total_cost,
-            'company_name': company.name,
-            'contact_name': company.contact_name,
-            'contact_email': company.contact_email
-        }
-
-        # Crear mensaje para el cliente
+        # Preparar mensaje para el cliente
         msg = MIMEMultipart('alternative')
         msg["From"] = f"{settings.MAIL_FROM_NAME} <{settings.MAIL_FROM_EMAIL}>"
         msg["To"] = user_email
         msg["Subject"] = f"Your Quote for Project: {project_name}"
+
+        # Contexto para las plantillas
+        email_context = {
+            'project_name': project_name,
+            'company_name': company.name,
+            'contact_name': company.contact_name,
+            'contact_email': company.contact_email,
+            'project_finish': project_data.get('project_finish', 'None')
+        }
 
         # Renderizar plantillas para el cliente
         logger.info("Intentando renderizar plantillas de correo para cliente")
@@ -651,7 +625,7 @@ def send_quote_email(customer_pdf_content, internal_pdf_content, project_name, u
         customer_pdf.add_header('Content-Disposition', 'attachment', filename=filename)
         msg.attach(customer_pdf)
 
-        # Preparar mensaje interno con PDF detallado
+        # Preparar mensaje interno
         msg_internal = MIMEMultipart('alternative')
         msg_internal["From"] = f"{settings.MAIL_FROM_NAME} <{settings.MAIL_FROM_EMAIL}>"
         msg_internal["To"] = internal_email_addr
@@ -709,68 +683,96 @@ def send_quote_email(customer_pdf_content, internal_pdf_content, project_name, u
         logger.error(f"Mensaje de error: {str(e)}")
         logger.error("Stacktrace:", exc_info=True)
         return False
+
     
 @require_http_methods(["POST"])
 def generate_quote(request):
     try:
-        logger.info("Iniciando generación de cotización")
+        logger.info("=" * 80)
+        logger.info("INICIANDO GENERACIÓN DE COTIZACIÓN")
+        logger.info("=" * 80)
         
         if not request.user.is_authenticated:
+            logger.warning("Usuario no autenticado")
             return redirect('login')
             
         if not request.user.company:
+            logger.warning("Usuario no asociado a una empresa")
             return render(request, 'quote/error.html', {
                 'error': 'Usuario no asociado a una empresa'
             })
 
-        # Collect project data including volumes
+        # Log request data for debugging
+        logger.info("Datos POST recibidos:")
+        logger.info(f"Nombre del proyecto: {request.POST.get('project_name')}")
+        logger.info(f"Acabado del proyecto: {request.POST.get('project_finish')}")
+        logger.info(f"Componentes: {request.POST.getlist('components[]')}")
+        logger.info(f"Materiales: {request.POST.getlist('materials[]')}")
+        logger.info(f"Cantidades: {request.POST.getlist('quantities[]')}")
+        logger.info(f"Volúmenes: {request.POST.getlist('volumes[]')}")
+
+        # Validar datos recibidos
+        if not all([
+            request.POST.getlist('components[]'),
+            request.POST.getlist('materials[]'),
+            request.POST.getlist('quantities[]'),
+            request.POST.getlist('volumes[]')
+        ]):
+            logger.error("❌ Faltan datos requeridos en el formulario")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Missing required form data'
+            }, status=400)
+
+        # Collect project data
         project_data = {
             'project_name': request.POST.get('project_name', 'New Project'),
+            'project_finish': request.POST.get('project_finish'),
             'components': request.POST.getlist('components[]'),
             'materials': request.POST.getlist('materials[]'),
             'quantities': request.POST.getlist('quantities[]'),
             'volumes': request.POST.getlist('volumes[]')
         }
 
-        # Get material densities
-        material_densities = {
-            material.material_type: material.density 
-            for material in MaterialDensity.objects.all()
-        }
-
-        # Generate customer PDF
+        logger.info("Generando PDF para cliente...")
         customer_quote_generator = QuoteGenerator(request.user, project_data, is_internal=False)
         customer_pdf_content = customer_quote_generator.generate_pdf()
+        logger.info("✅ PDF de cliente generado exitosamente")
 
-        # Generate internal PDF
+        logger.info("Generando PDF interno...")
         internal_quote_generator = QuoteGenerator(request.user, project_data, is_internal=True)
         internal_pdf_content = internal_quote_generator.generate_pdf()
+        logger.info("✅ PDF interno generado exitosamente")
 
-        # Send emails with appropriate PDFs
+        logger.info("Enviando correos electrónicos...")
         email_sent = send_quote_email(
-            customer_pdf_content,  # PDF para el cliente
-            internal_pdf_content,  # PDF para uso interno
+            customer_pdf_content,
+            internal_pdf_content,
             project_data['project_name'],
             request.user.company.contact_email,
             settings.INTERNAL_QUOTE_EMAIL,
             project_data,
-            request.user.company,
-            material_densities
+            request.user.company
         )
 
         if email_sent:
+            logger.info("✅ Cotización generada y enviada exitosamente")
             return JsonResponse({
                 'status': 'success',
                 'message': 'Quote has been sent to your email'
             })
         else:
+            logger.error("❌ Error al enviar los correos electrónicos")
             return JsonResponse({
                 'status': 'error',
                 'message': 'Error sending email'
             }, status=500)
 
     except Exception as e:
-        logger.error(f"Error generating quote: {str(e)}", exc_info=True)
+        logger.error("❌ Error en la generación de la cotización:")
+        logger.error(f"Tipo de error: {type(e).__name__}")
+        logger.error(f"Mensaje de error: {str(e)}")
+        logger.error("Stacktrace:", exc_info=True)
         return JsonResponse({
             'status': 'error',
             'message': f'Error generating quote: {str(e)}'

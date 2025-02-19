@@ -69,6 +69,8 @@ MIDDLEWARE = [
 
 LOGIN_REDIRECT_URL = 'quote/home'
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
+
 # URL del login
 LOGIN_URL = 'session:login'
 
@@ -156,7 +158,6 @@ from pathlib import Path
 load_dotenv(dotenv_path=env_path)
 import os
 
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 PORT: int = int(os.getenv("PORT", 8080))
 MAIL_FROM_NAME: str = os.getenv("MAIL_FROM_NAME")

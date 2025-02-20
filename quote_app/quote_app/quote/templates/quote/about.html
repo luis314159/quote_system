@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<!-- Sección Hero: fondo ancho con gradiente y onda -->
+<div class="w-full relative bg-gradient-to-r from-[#053c57] to-[#383638]">
+    <!-- Contenedor centrado para texto -->
+    <div class="max-w-screen-2xl mx-auto py-12 sm:py-16 md:py-24 px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
+                Global Manufacturing Excellence
+            </h1>
+            <p class="mt-3 max-w-md mx-auto text-lg text-gray-200 sm:text-xl md:mt-5 md:max-w-3xl">
+                Strategic metal manufacturing solutions for the USA market
+            </p>
+        </div>
+    </div>
+    <!-- Onda posicionada al fondo -->
+    <div class="absolute bottom-0 w-full">
+        <svg class="w-full h-24" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,74L1320,74C1200,74,960,74,720,74C480,74,240,74,120,74L0,74Z" fill="white" />
+        </svg>
+    </div>
+</div>
+
+<!-- Company Overview Section -->
+<div class="w-full py-16 bg-white">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:text-center">
+            <p class="text-3xl leading-8 font-extrabold tracking-tight text-[#2d2b2d] sm:text-4xl">
+                Who are we?
+            </p>
+            <p class="mt-4 max-w mx-auto text-xl text-gray-500">
+                GRUPO ARGA METALS belongs to an industrial holding (GRUPO
+                ARGA) and is strategically located in the North of Mexico to serve
+                Mexico and USA. 250 miles from El Paso, Tx (3.5 hrs transit time
+                from Chihuahua to ELP).
+                We have the Experience, Equipment, Qualified labor force and
+                Certifications required to Manufacture any parts for the general
+                Metal Mechanic Industry.
+                Our products as of now is 100% exported to the USA
+            </p>
+        </div>
+
+
+<!-- Map Section -->
+<div class="w-full py-16 bg-white">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+                Our Location
+            </h2>
+            <p class="mt-4 text-lg text-gray-500">
+                Strategically located to serve both Mexican and US markets
+            </p>
+        </div>
+        
+        <!-- Mapa -->
+        <div class="mt-12">
+            <div id="hs-grayscale-leaflet" class="h-[400px] hs-leaflet z-10 rounded-lg shadow-lg"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos del mapa -->
+<style>
+    .hs-leaflet.leaflet-touch .leaflet-control-layers,
+    .hs-leaflet.leaflet-touch .leaflet-bar {
+        border-width: 0px;
+    }
+    .hs-leaflet.leaflet-touch .leaflet-bar a {
+        line-height: 1.5;
+        background-color: rgba(255,255,255,.8);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    .hs-leaflet.leaflet-touch .leaflet-bar a:first-child,
+    .hs-leaflet.leaflet-touch .leaflet-bar a:last-child {
+        border-radius: 8px;
+    }
+    .hs-leaflet .leaflet-control-zoom-in,
+    .hs-leaflet .leaflet-control-zoom-out {
+        font-weight: 400;
+        font-size: 18px;
+        color: #1f2937;
+        text-indent: 0px;
+    }
+    .hs-leaflet .leaflet-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .hs-leaflet .leaflet-bar a {
+        border-width: 0;
+    }
+    .hs-leaflet .leaflet-bar a:hover,
+    .hs-leaflet .leaflet-bar a:focus {
+        background-color: #e5e7eb;
+    }
+    .hs-leaflet .leaflet-popup-content-wrapper,
+    .hs-leaflet .leaflet-popup-tip {
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .hs-leaflet .leaflet-popup-tip {
+        border-radius: 4px;
+    }
+    .hs-leaflet.leaflet-container a.leaflet-popup-close-button {
+        top: -10px;
+        right: -10px;
+        border-radius: 9999px;
+        background-color: #f3f4f6;
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .hs-leaflet.leaflet-container a.leaflet-popup-close-button:hover {
+        background-color: #f3f4f6;
+    }
+    .hs-leaflet-unstyled-popover .leaflet-popup-content-wrapper {
+        display: flex;
+    }
+    .hs-leaflet-unstyled-popover .leaflet-popup-content {
+        padding: 0;
+        margin: 0;
+        background: none;
+        line-height: normal;
+        border-radius: 0;
+        font-size: inherit;
+        min-height: auto;
+    }
+</style>
+<!-- Script del mapa -->
+<script>
+    window.addEventListener('load', () => {
+        (function () {
+            const map = L.map('hs-grayscale-leaflet', {
+                center: [28.67614, -106.00391],  // Coordenadas de Chihuahua
+                zoom: 10,
+                maxBounds: [
+                    [25, -110],
+                    [32, -102]
+                ],
+                maxBoundsViscosity: 1.0
+            });
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                minZoom: 5,
+               
+            }).addTo(map);
+            
+            L.marker([28.67614, -106.00391])
+                .bindPopup('<strong>Grupo Arga</strong><br>Calle Valle de Aldama y Libramiento Oriente 24302<br>Rancho de Enmedio, 31376<br>Chihuahua, Chih.')
+                .addTo(map);
+        })();
+    });
+</script>
+
+
+
+
+
+<h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+    <div class="lg:text-center">
+    Why us?
+    
+</h2>
+        
+        <div class="mt-16">
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Mission -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-[#2d2b2d]">Mission</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-base text-gray-500">
+                            Offer comprehensive engineering, manufacturing and service solutions, meeting the standards,
+                            requirements and quality expected by our customers.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vision -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-[#2d2b2d]">Vision</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-base text-gray-500">
+                            Achieve long-term relationships with our customers and suppliers based on comprehensive service.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Values -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-[#2d2b2d]">Values</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• Safety First</li>
+                                <li>• Honesty</li>
+                                <li>• Respect for others</li>
+                                <li>• Ethical behavior</li>
+                                <li>• Process innovation</li>
+                                <li>• Justice and equity</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Capabilities Section -->
+<div class="bg-gray-50 py-16">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+                Our Capabilities
+            </h2>
+            <p class="mt-4 text-lg text-gray-500">
+                State-of-the-art technology and expertise in metal manufacturing
+            </p>
+        </div>
+
+        <div class="mt-12">
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Products -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="px-6 py-8">
+                        <div class="text-lg font-medium text-[#2d2b2d]">Products</div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• Tanks</li>
+                                <li>• Brackets</li>
+                                <li>• Control Boxes</li>
+                                <li>• Enclosures</li>
+                                <li>• Radiators</li>
+                                <li>• Logistics Solutions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technology -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="px-6 py-8">
+                        <div class="text-lg font-medium text-[#2d2b2d]">Advanced Technology</div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• Robotic Plasma Cutting</li>
+                                <li>• AI-Assisted Welding</li>
+                                <li>• Laser Cutting</li>
+                                <li>• CNC Machinery</li>
+                                <li>• Automated Systems</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certifications -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="px-6 py-8">
+                        <div class="text-lg font-medium text-[#2d2b2d]">Certifications</div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• ISO 9001:2015</li>
+                                <li>• AWS Certified Welders</li>
+                                <li>• CWI Inspector in-house</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Gallery -->
+<div class="bg-gray-50 py-16">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+                Gallery
+            </h2>
+            <p class="mt-4 text-lg text-gray-500">
+                
+            </p>
+        </div>
+        <div class="w-full">
+            <div class="relative right-0">
+                <div class="w-full">
+                    <div class="relative right-0">
+                        <ul class="relative flex flex-wrap px-1.5 py-1.5 list-none rounded-md bg-slate-100" data-tabs="tabs" role="list">
+                            <li class="z-30 flex-auto text-center">
+                                <a href="#building" class="z-30 flex items-center justify-center w-full px-0 py-2 text-sm mb-0 transition-all ease-in-out border-0 rounded-lg cursor-pointer text-slate-700 bg-inherit"
+                                    role="tab"
+                                    aria-selected="true"
+                                    aria-controls="building">
+                                    <span class="ml-1">Building</span>
+                                </a>
+                            </li>
+                            <li class="z-30 flex-auto text-center">
+                                <a href="#robots" class="z-30 flex items-center justify-center w-full px-0 py-2 text-sm mb-0 transition-all ease-in-out border-0 rounded-lg cursor-pointer text-slate-700 bg-inherit"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="robots">
+                                    <span class="ml-1">Robots</span>
+                                </a>
+                            </li>
+                            <li class="z-30 flex-auto text-center">
+                                <a href="#tanks" class="z-30 flex items-center justify-center w-full px-0 py-2 text-sm mb-0 transition-all ease-in-out border-0 rounded-lg cursor-pointer text-slate-700 bg-inherit"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="tanks">
+                                    <span class="ml-1">Tanks</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div data-tab-content class="p-5">
+                    <div class="block opacity-100" id="building" role="tabpanel">
+                        <div class="grid w-full grid-cols-3 gap-4 p-4 font-sans text-base antialiased font-light leading-relaxed text-gray-700 h-max">
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/arga_building_core.png' %}" alt="Building Core" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/arga_building_front.png' %}" alt="Building Front" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/arga_building_inside.png' %}" alt="Building Inside" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/arga_building_meetingsroom.png' %}" alt="Meeting Room" />
+                            </div>
+                            <div>
+                                <!-- Verifica que este archivo existe o corrige el nombre/extension -->
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/arga_bulding_landscape.png' %}" alt="Building Landscape" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden opacity-0" id="robots" role="tabpanel">
+                        <div class="grid w-full grid-cols-3 gap-4 p-4 font-sans text-base antialiased font-light leading-relaxed text-gray-700 h-max">
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/r3.png' %}" alt="Robot 3" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/r4.png' %}" alt="Robot 4" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/r5.png' %}" alt="Robot 5" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/robot1.png' %}" alt="Robot 1" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/robot3.png' %}" alt="Robot 3" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/robot4.png' %}" alt="Robot 4" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden opacity-0" id="tanks" role="tabpanel">
+                        <div class="grid w-full grid-cols-3 gap-4 p-4 font-sans text-base antialiased font-light leading-relaxed text-gray-700 h-max">
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/tank1.png' %}" alt="Tank 1" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/tank2.png' %}" alt="Tank 2" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/tank3.png' %}" alt="Tank 3" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/tank4.png' %}" alt="Tank 4" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/tank5.png' %}" alt="Tank 5" />
+                            </div>
+                            <div>
+                                <img class="w-full h-40 max-w-full rounded-lg" src="{% static 'quote/images/tank6.png' %}" alt="Tank 6" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para las pestañas -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('[role="tab"]');
+    const panels = document.querySelectorAll('[role="tabpanel"]');
+
+    // Agregar click handler a cada pestaña
+    tabs.forEach(tab => {
+        tab.addEventListener('click', e => {
+            e.preventDefault();
+            
+            // Desactivar todas las pestañas
+            tabs.forEach(t => {
+                t.setAttribute('aria-selected', 'false');
+                t.classList.remove('bg-white');
+            });
+            
+            // Ocultar todos los paneles
+            panels.forEach(panel => {
+                panel.classList.add('hidden', 'opacity-0');
+                panel.classList.remove('block', 'opacity-100');
+            });
+            
+            // Activar la pestaña seleccionada
+            const selectedTab = e.currentTarget;
+            selectedTab.setAttribute('aria-selected', 'true');
+            selectedTab.classList.add('bg-white');
+            
+            // Mostrar el panel correspondiente
+            const panelId = selectedTab.getAttribute('aria-controls');
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.classList.remove('hidden', 'opacity-0');
+                panel.classList.add('block', 'opacity-100');
+            }
+        });
+    });
+
+    // Activar la primera pestaña por defecto
+    if (tabs.length > 0) {
+        tabs[0].click();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+<!-- templates/quote/email/customer_quote.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote for Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="max-w-xl mx-auto bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold">Quote for Project: {{ project_name }}</h2>
+        <p class="mt-2 text-gray-600">Thank you for requesting a quote.</p>
+        <p class="mt-2 text-gray-600">Please find attached your quote document.</p>
+        <div class="mt-4 border-t pt-4 text-gray-700">
+            <p>Best regards,</p>
+            <p class="font-semibold">Grupo ARGA Team</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="display-4">Error {{ error_code }}</h1>
+    <p class="lead">{{ error_message }}</p>
+    <a href="{% url 'quote:home' %}" class="btn btn-primary">Volver a la página de inicio</a>
+</div>
+{% endblock %}

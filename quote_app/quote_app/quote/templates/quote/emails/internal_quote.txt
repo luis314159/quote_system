@@ -1,0 +1,23 @@
+New Quote Generated - Project: {{ project_name }}
+
+Project Details:
+{% for item in components %}
+- {{ item.component }}:
+  Material: {{ item.material }}
+  Quantity: {{ item.quantity }}
+  Volume: {{ item.volume|floatformat:2 }} in³
+  Weight: {{ item.weight|floatformat:2 }} lbs
+  Unit Cost: ${{ item.unit_cost|floatformat:2 }}
+  Total Cost: ${{ item.total_cost|floatformat:2 }}
+{% endfor %}
+
+Summary:
+- Total Components: {{ total_components }}
+- Total Volume: {{ total_volume|floatformat:2 }} in³
+- Total Weight: {{ total_weight|floatformat:2 }} lbs
+- Total Cost: ${{ total_cost|floatformat:2 }}
+
+Customer Information:
+- Company: {{ company_name }}
+- Contact: {{ contact_name }}
+- Email: {{ contact_email }}

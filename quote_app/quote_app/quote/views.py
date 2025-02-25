@@ -50,7 +50,7 @@ def upload_step(request: HttpRequest):
             
         try:
             # Process STEP file here
-            result_df = analyze_step_file(file, "F://aethersoft//quote_app//quote_app//quote_app//data//csv")
+            result_df = analyze_step_file(file, './data/csv')
             # Store the DataFrame in the session
             request.session['result_data'] = result_df.to_dict('records')
             return redirect('quote:results')

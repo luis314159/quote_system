@@ -2,21 +2,24 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Favicons -->
+    <!-- Favicons - Íconos para diferentes plataformas -->
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
     <link rel="shortcut icon" type="image/x-icon" href="{% static 'quote/images/logogrupoargaHDpng.png' %}">
+    <!-- Metadatos básicos -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Título de la página -->
     <title>{% block title %}Grupo Arga - STEP Analysis{% endblock %}</title>
-    <!-- Leaflet CSS y JS -->
+    <!-- Leaflet CSS y JS - Biblioteca para mapas interactivos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    <!-- Tailwind y Font Awesome -->
+    <!-- Tailwind CSS para estilos y Font Awesome para iconos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     {% load static %}
+    <!-- Script para manejar el menú móvil -->
     <script>
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
@@ -25,7 +28,7 @@
     </script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-50">
-    <!-- Navbar -->
+    <!-- Navbar - Barra de navegación principal -->
     <nav class="bg-white shadow">
         <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-wrap items-center justify-between">
@@ -34,14 +37,11 @@
                     <div class="flex-shrink-0 flex items-center">
                         <a href="{% url 'quote:home' %}" class="flex items-center">
                             <img class="h-12 sm:h-16 w-auto" src="{% static 'quote/images/logo.jpg' %}" alt="Grupo Arga Logo">
-                            <span class="ml-2 text-lg sm:text-xl font-semibold text-gray-800">
-                                Automatic Quote System
-                            </span>
                         </a>
                     </div>
                 </div>
 
-                <!-- Navegación Desktop -->
+                <!-- Navegación Desktop - Enlaces para pantallas grandes -->
                 <div class="hidden sm:flex sm:items-center">
                     <div class="flex items-center space-x-4">
                         <a href="{% url 'quote:home' %}" 
@@ -54,12 +54,17 @@
                                   hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
                             <i class="fas fa-info-circle mr-2"></i> About Us
                         </a>
+
+                        <!-- Enlace a sistema de cotización solo para usuarios autenticados -->
+                        {% if user.is_authenticated %}
                         <a href="{% url 'quote:upload' %}" 
                            class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 
                                   hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
                             <i class="fas fa-file-invoice-dollar mr-2"></i> Quote System
                         </a>
-                        
+                        {% endif %}
+
+                        <!-- Información de usuario y botón de cierre de sesión -->
                         {% if user.is_authenticated %}
                         <div class="flex items-center space-x-4">
                             <div class="flex items-center">
@@ -78,11 +83,18 @@
                                 <i class="fas fa-sign-out-alt"></i>
                             </a>
                         </div>
+                        {% else %}
+                        <!-- Botón de login para usuarios no autenticados -->
+                        <a href="{% url 'session:login' %}" 
+                           class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-blue-600 
+                                  hover:text-blue-800 hover:bg-blue-50 transition duration-150 ease-in-out border border-blue-500">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Iniciar Sesión
+                        </a>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Botón Menú Móvil -->
+                <!-- Botón Menú Móvil - Visible solo en pantallas pequeñas -->
                 <div class="flex items-center sm:hidden">
                     <button type="button" 
                             class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 
@@ -98,9 +110,10 @@
             </div>
         </div>
 
-        <!-- Menú Móvil -->
+        <!-- Menú Móvil - Se muestra/oculta con el botón -->
         <div class="sm:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1">
+                
                 <a href="{% url 'quote:home' %}" 
                    class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 
                           hover:text-gray-900 hover:bg-gray-100">
@@ -111,11 +124,22 @@
                           hover:text-gray-900 hover:bg-gray-100">
                     <i class="fas fa-info-circle mr-2"></i> About Us
                 </a>
+                {% if user.is_authenticated %}
                 <a href="{% url 'quote:upload' %}" 
                    class="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 
                           hover:text-gray-900 hover:bg-gray-100">
                     <i class="fas fa-file-invoice-dollar mr-2"></i> Quote System
                 </a>
+                {% else %}
+                <!-- Botón de login para móvil cuando no está autenticado -->
+                <a href="{% url 'session:login' %}" 
+                   class="flex items-center px-3 py-2 rounded-md text-base font-medium text-blue-600 
+                          hover:text-blue-800 hover:bg-blue-50 border border-blue-500">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Iniciar Sesión
+                </a>
+                {% endif %}
+                
+                <!-- Información de usuario y botón de cierre de sesión (versión móvil) -->
                 {% if user.is_authenticated %}
                 <div class="mt-3 px-3 py-2 bg-white border border-gray-200 rounded-md">
                     <div class="flex items-center">
@@ -140,7 +164,7 @@
         </div>
     </nav>
 
-    <!-- Contenido Principal -->
+    <!-- Contenido Principal - Aquí se insertará el contenido de los templates que hereden -->
     <main class="flex-grow">
         <div class="max-w-screen-2xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             {% block content %}
@@ -148,7 +172,7 @@
         </div>
     </main>
 
-    <!-- Footer -->
+    <!-- Footer - Pie de página con información de derechos de autor -->
     <footer class="bg-white shadow">
         <div class="max-w-screen-2xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
             <div class="flex justify-center items-center">
@@ -161,7 +185,7 @@
         </div>
     </footer>
 
-    <!-- Notificaciones -->
+    <!-- Notificaciones - Sistema para mostrar mensajes flash -->
     {% if messages %}
     <div class="fixed bottom-5 right-5">
         {% for message in messages %}

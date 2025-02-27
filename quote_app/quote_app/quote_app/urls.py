@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from quote.views import home  # Importa directamente la vista home
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', home, name='root_home'),
     path('quote/', include('quote.urls')),
-    path('', include('session.urls'))
+    path('', include('session.urls')),
+
 ]

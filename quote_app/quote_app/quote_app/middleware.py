@@ -14,7 +14,6 @@ class AuthenticationMiddleware:
             'login',           # Login page
             'register',        # Register page
             'home',
-            'about'
         ]
 
     def __call__(self, request):

@@ -40,7 +40,7 @@
                         </a>
                     </div>
                 </div>
-
+                {% if user.is_authenticated %}
                 <!-- Navegación Desktop - Enlaces para pantallas grandes -->
                 <div class="hidden sm:flex sm:items-center">
                     <div class="flex items-center space-x-4">
@@ -52,8 +52,9 @@
                         <a href="{% url 'quote:about' %}" 
                            class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 
                                   hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out">
-                            <i class="fas fa-info-circle mr-2"></i> About Us
+                            <i class="fas fa-info-circle mr-2"></i> About Quote System
                         </a>
+                        {% endif %}
 
                         <!-- Enlace a sistema de cotización solo para usuarios autenticados -->
                         {% if user.is_authenticated %}

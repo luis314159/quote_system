@@ -2,173 +2,493 @@
 {% load static %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="relative bg-[#053c57]">
-    <div class="max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
+<!-- Sección Hero: fondo ancho con gradiente y onda -->
+<div class="w-full relative bg-gradient-to-r from-[#053c57] to-[#383638]">
+    <!-- Contenedor centrado para texto -->
+    <div class="max-w-screen-2xl mx-auto py-12 sm:py-16 md:py-24 px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-                Smart Quotation System
+                Global Manufacturing Excellence
             </h1>
-            <p class="mt-3 max-w-md mx-auto text-lg text-gray-100 sm:text-xl md:mt-5 md:max-w-3xl">
-                Automate your quotations with precision and speed. Calculate manufacturing costs in real-time.
+            <p class="mt-3 max-w-md mx-auto text-lg text-gray-200 sm:text-xl md:mt-5 md:max-w-3xl">
+                Strategic metal manufacturing solutions for the USA market
             </p>
-            <div class="mt-10">
-                <a href="#how-it-works" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-[#053c57] bg-white hover:bg-gray-50 transition duration-150">
-                    Learn More
-                </a>
-            </div>
         </div>
     </div>
-    <!-- Decorative wave pattern -->
+    <!-- Onda posicionada al fondo -->
     <div class="absolute bottom-0 w-full">
         <svg class="w-full h-24" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,74L1320,74C1200,74,960,74,720,74C480,74,240,74,120,74L0,74Z" fill="white"/>
+            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,74L1320,74C1200,74,960,74,720,74C480,74,240,74,120,74L0,74Z" fill="white" />
         </svg>
     </div>
 </div>
 
-<!-- Features Section -->
-<div id="how-it-works" class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h2 class="text-3xl font-extrabold text-[#2d2b2d] sm:text-4xl">
-                How It Works
-            </h2>
-            <p class="mt-4 text-lg text-gray-600">
-                Our automated system simplifies the quotation process in three easy steps
+<!-- Company Overview Section -->
+<div class="w-full py-16 bg-white">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:text-center">
+            <p class="text-3xl leading-8 font-extrabold tracking-tight text-[#2d2b2d] sm:text-4xl">
+                Who are we?
+            </p>
+            <p class="mt-4 max-w mx-auto text-xl text-gray-500">
+                GRUPO ARGA METALS belongs to an industrial holding (GRUPO
+                ARGA) and is strategically located in the North of Mexico to serve
+                Mexico and USA. 250 miles from El Paso, Tx (3.5 hrs transit time
+                from Chihuahua to ELP).
+                We have the Experience, Equipment, Qualified labor force and
+                Certifications required to Manufacture any parts for the general
+                Metal Mechanic Industry.
+                Our products as of now is 100% exported to the USA
             </p>
         </div>
 
-        <div class="mt-20">
-            <div class="grid grid-cols-1 gap-12 lg:grid-cols-3">
-                <!-- Step 1 -->
-                <div class="relative">
-                    <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
-                        <span class="text-lg font-bold">1</span>
-                    </div>
-                    <div class="ml-16">
-                        <h3 class="text-xl font-medium text-[#2d2b2d]">Upload Your Design</h3>
-                        <p class="mt-2 text-base text-gray-600">
-                            Our system analyzes your design and extracts key data.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="relative">
-                    <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
-                        <span class="text-lg font-bold">2</span>
-                    </div>
-                    <div class="ml-16">
-                        <h3 class="text-xl font-medium text-[#2d2b2d]">Automated Processing</h3>
-                        <p class="mt-2 text-base text-gray-600">
-                            Our intelligent system evaluates and calculates the best cost estimate.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="relative">
-                    <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
-                        <span class="text-lg font-bold">3</span>
-                    </div>
-                    <div class="ml-16">
-                        <h3 class="text-xl font-medium text-[#2d2b2d]">Receive Your Quote</h3>
-                        <p class="mt-2 text-base text-gray-600">
-                            Get a precise and instant quotation without manual calculations.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CTA Section -->
-<div class="bg-gray-50">
-    <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        <div class="bg-[#053c57] rounded-lg shadow-xl overflow-hidden">
-            <div class="pt-10 pb-12 px-6 sm:pt-16 sm:px-16 lg:py-16 lg:pr-0 xl:py-20 xl:px-20 flex items-center justify-center text-center">
-                <div class="lg:self-center">
-                    <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
-                        <span class="block">Ready to Start?</span>
-                    </h2>
-                    <p class="mt-4 text-lg leading-6 text-gray-100">
-                        Get an accurate quote in minutes with our automated system.
-                    </p>
-                    <a href="{% url 'quote:upload' %}" class="mt-8 bg-white border border-transparent rounded-md shadow px-6 py-3 inline-flex items-center text-base font-medium text-[#053c57] hover:bg-gray-50 transition duration-150">
-                        Get Quote Now
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 
-<!-- Benefits Section -->
-<div class="bg-white py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Map Section -->
+<div class="w-full py-16 bg-white">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
-                System Benefits
+                Our Location
             </h2>
+            <p class="mt-4 text-lg text-gray-500">
+                Strategically located to serve both Mexican and US markets
+            </p>
         </div>
-        <div class="mt-10">
-            <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-                <!-- Benefit 1 -->
-                <div class="text-center">
-                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mx-auto">
-                        <svg class="h-8 w-8 text-[#053c57]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
+        
+        <!-- Mapa de Google (iframe) -->
+        <div class="mt-12">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d42334.41585132388!2d-106.0479380984934!3d28.74019269230512!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86ea47a5c1206c73%3A0x129184372a62547c!2sGrupo%20ARGA%2FTIK%20Chihuahua!5e0!3m2!1ses!2smx!4v1740705340082!5m2!1ses!2smx" 
+                width="100%" 
+                height="450" 
+                style="border:0; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+
+        </div>
+    </div>
+
+
+</div>
+<h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+    <div class="lg:text-center">
+    Why us?
+    
+</h2>
+        
+        <div class="mt-16">
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Mission -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-[#2d2b2d]">Mission</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-base text-gray-500">
+                            Offer comprehensive engineering, manufacturing and service solutions, meeting the standards,
+                            requirements and quality expected by our customers.
+                        </div>
                     </div>
-                    <h3 class="mt-4 text-lg font-medium text-[#2d2b2d]">Speed</h3>
-                    <p class="mt-2 text-base text-gray-600">
-                        Instant quotes that save valuable time
-                    </p>
                 </div>
 
-                <!-- Benefit 2 -->
-                <div class="text-center">
-                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mx-auto">
-                        <svg class="h-8 w-8 text-[#053c57]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
+                <!-- Vision -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-[#2d2b2d]">Vision</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-base text-gray-500">
+                            Achieve long-term relationships with our customers and suppliers based on comprehensive service.
+                        </div>
                     </div>
-                    <h3 class="mt-4 text-lg font-medium text-[#2d2b2d]">Precision</h3>
-                    <p class="mt-2 text-base text-gray-600">
-                        Exact calculations based on real data
-                    </p>
                 </div>
 
-                <!-- Benefit 3 -->
-                <div class="text-center">
-                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mx-auto">
-                        <svg class="h-8 w-8 text-[#053c57]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
+                <!-- Values -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-[#053c57] text-white">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-[#2d2b2d]">Values</h3>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• Safety First</li>
+                                <li>• Honesty</li>
+                                <li>• Respect for others</li>
+                                <li>• Ethical behavior</li>
+                                <li>• Process innovation</li>
+                                <li>• Justice and equity</li>
+                            </ul>
+                        </div>
                     </div>
-                    <h3 class="mt-4 text-lg font-medium text-[#2d2b2d]">Up-to-date</h3>
-                    <p class="mt-2 text-base text-gray-600">
-                        Material prices always current
-                    </p>
-                </div>
-
-                <!-- Benefit 4 -->
-                <div class="text-center">
-                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mx-auto">
-                        <svg class="h-8 w-8 text-[#053c57]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
-                        </svg>
-                    </div>
-                    <h3 class="mt-4 text-lg font-medium text-[#2d2b2d]">Support</h3>
-                    <p class="mt-2 text-base text-gray-600">
-                        Technical assistance when you need it
-                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<!-- Capabilities Section -->
+<div class="bg-gray-50 py-16">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-[#2d2b2d]">
+                Our Capabilities
+            </h2>
+            <p class="mt-4 text-lg text-gray-500">
+                State-of-the-art technology and expertise in metal manufacturing
+            </p>
+        </div>
+
+        <div class="mt-12">
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Products -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="px-6 py-8">
+                        <div class="text-lg font-medium text-[#2d2b2d]">Products</div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• Tanks</li>
+                                <li>• Brackets</li>
+                                <li>• Control Boxes</li>
+                                <li>• Enclosures</li>
+                                <li>• Radiators</li>
+                                <li>• Logistics Solutions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technology -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="px-6 py-8">
+                        <div class="text-lg font-medium text-[#2d2b2d]">Advanced Technology</div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• Robotic Plasma Cutting</li>
+                                <li>• AI-Assisted Welding</li>
+                                <li>• Laser Cutting</li>
+                                <li>• CNC Machinery</li>
+                                <li>• Automated Systems</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certifications -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-lg">
+                    <div class="px-6 py-8">
+                        <div class="text-lg font-medium text-[#2d2b2d]">Certifications</div>
+                        <div class="mt-4 text-base text-gray-500">
+                            <ul class="space-y-2">
+                                <li>• ISO 9001:2015</li>
+                                <li>• AWS Certified Welders</li>
+                                <li>• CWI Inspector in-house</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery -->
+<div class="bg-gray-50 py-16">
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <h2 class="text-3xl font-extrabold text-[#2d2b2d]">Gallery</h2>
+      <p class="mt-4 text-lg text-gray-500"></p>
+    </div>
+
+    <div class="w-full">
+      <div class="relative right-0">
+        <div class="w-full">
+          <div class="relative right-0">
+            <!-- Lista de pestañas -->
+            <ul 
+              class="relative flex flex-wrap px-1.5 py-1.5 list-none rounded-md bg-slate-100"
+              data-tabs="tabs"
+              role="list"
+            >
+              <!-- Building Tab -->
+              <li class="z-30 flex-auto text-center">
+                <a
+                  href="#building"
+                  class="z-30 flex items-center justify-center w-full px-0 py-2 text-sm mb-0 transition-all ease-in-out border-0 rounded-lg cursor-pointer text-slate-700 bg-inherit"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="building"
+                >
+                  <span class="ml-1">Building</span>
+                </a>
+              </li>
+
+              <!-- Robots Tab -->
+              <li class="z-30 flex-auto text-center">
+                <a
+                  href="#robots"
+                  class="z-30 flex items-center justify-center w-full px-0 py-2 text-sm mb-0 transition-all ease-in-out border-0 rounded-lg cursor-pointer text-slate-700 bg-inherit"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="robots"
+                >
+                  <span class="ml-1">Robots</span>
+                </a>
+              </li>
+
+              <!-- Products Tab -->
+              <li class="z-30 flex-auto text-center">
+                <a
+                  href="#products"
+                  class="z-30 flex items-center justify-center w-full px-0 py-2 text-sm mb-0 transition-all ease-in-out border-0 rounded-lg cursor-pointer text-slate-700 bg-inherit"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="products"
+                >
+                  <span class="ml-1">Products</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Contenido de cada pestaña -->
+        <div data-tab-content class="p-5">
+
+          <!-- Building Panel -->
+          <div
+            class="block opacity-100"
+            id="building"
+            role="tabpanel"
+          >
+            <div class="grid w-full grid-cols-3 gap-4 p-4 font-sans text-base antialiased font-light leading-relaxed text-gray-700 h-max">
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/arga_building_core.png' %}"
+                  alt="Building Core"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/arga_building_front.png' %}"
+                  alt="Building Front"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/arga_building_inside.png' %}"
+                  alt="Building Inside"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/arga_building_meetingsroom.png' %}"
+                  alt="Meeting Room"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/arga_bulding_landscape.png' %}"
+                  alt="Building Landscape"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Robots Panel -->
+          <div
+            class="hidden opacity-0"
+            id="robots"
+            role="tabpanel"
+          >
+            <div class="grid w-full grid-cols-3 gap-4 p-4 font-sans text-base antialiased font-light leading-relaxed text-gray-700 h-max">
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/r3.png' %}"
+                  alt="Robot 3"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/r4.png' %}"
+                  alt="Robot 4"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/r5.png' %}"
+                  alt="Robot 5"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/robot1.png' %}"
+                  alt="Robot 1"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/robot3.png' %}"
+                  alt="Robot 3"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/robot4.png' %}"
+                  alt="Robot 4"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Products Panel -->
+          <div
+            class="hidden opacity-0"
+            id="products"
+            role="tabpanel"
+          >
+            <div class="grid w-full grid-cols-3 gap-4 p-4 font-sans text-base antialiased font-light leading-relaxed text-gray-700 h-max">
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/tank1.png' %}"
+                  alt="Tank 1"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/tank2.png' %}"
+                  alt="Tank 2"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/tank3.png' %}"
+                  alt="Tank 3"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/tank4.png' %}"
+                  alt="Tank 4"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/tank5.png' %}"
+                  alt="Tank 5"
+                />
+              </div>
+              <div>
+                <img
+                  class="w-full h-40 max-w-full rounded-lg"
+                  src="{% static 'quote/images/tank6.png' %}"
+                  alt="Tank 6"
+                />
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- /data-tab-content -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript para controlar las pestañas -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tabs = document.querySelectorAll('[role="tab"]');
+  const panels = document.querySelectorAll('[role="tabpanel"]');
+
+  // Manejo de clic en cada pestaña
+  tabs.forEach(tab => {
+    tab.addEventListener('click', e => {
+      e.preventDefault();
+
+      // Desactivar todas las pestañas
+      tabs.forEach(t => {
+        t.setAttribute('aria-selected', 'false');
+        // Quita cualquier clase de highlight
+        t.classList.remove('bg-white', 'shadow', 'font-semibold', 'text-[#0A3C55]');
+      });
+
+      // Ocultar todos los paneles
+      panels.forEach(panel => {
+        panel.classList.add('hidden', 'opacity-0');
+        panel.classList.remove('block', 'opacity-100');
+      });
+
+      // Activar la pestaña clicada
+      const selectedTab = e.currentTarget;
+      selectedTab.setAttribute('aria-selected', 'true');
+      // Agregamos un efecto visual de "resaltado"
+      selectedTab.classList.add('bg-white', 'shadow', 'font-semibold', 'text-[#0A3C55]');
+
+      // Mostrar el panel correspondiente
+      const panelId = selectedTab.getAttribute('aria-controls');
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.classList.remove('hidden', 'opacity-0');
+        panel.classList.add('block', 'opacity-100');
+      }
+    });
+  });
+
+  // Activar la primera pestaña por defecto
+  if (tabs.length > 0) {
+    tabs[0].click();
+  }
+});
+</script>
+
 {% endblock %}

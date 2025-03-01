@@ -13,6 +13,7 @@ class AuthenticationMiddleware:
             '/quote/about/',     # About page
             'login',           # Login page
             'register',        # Register page
+            'home',
         ]
 
     def __call__(self, request):

@@ -6,8 +6,11 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
 # Importar los servicios necesarios
+
 from ..services.excel_quote_generator import ExcelQuoteGenerator
 from ..services.email_service import send_excel_quote_email
+from ..services.pdf_conversion_service import PDFConverter
+
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -16,8 +19,12 @@ logger = logging.getLogger(__name__)
 def generate_quote(request: HttpRequest):
     try:
         logger.info("=" * 80)
-        logger.info("STARTING QUOTE GENERATION (EXCEL FORMAT)")
+        logger.info("STARTING QUOTE GENERATION (EXCEL FORMAT WITH OPTIONAL PDF)")
         logger.info("=" * 80)
+        
+        # Check if PDF conversion is supported
+        pdf_supported = PDFConverter.is_conversion_supported()
+        logger.info(f"PDF conversion supported: {pdf_supported}")
         
         if not request.user.is_authenticated:
             logger.warning("User not authenticated")
@@ -90,10 +97,11 @@ def generate_quote(request: HttpRequest):
         )
 
         if email_sent:
-            logger.info("✅ Quote generated and sent successfully")
+            format_msg = "Excel and PDF" if pdf_supported else "Excel"
+            logger.info(f"✅ Quote generated and sent successfully in {format_msg} format")
             return JsonResponse({
                 'status': 'success',
-                'message': 'Quote has been sent to your email'
+                'message': f'Quote has been sent to your email in {format_msg} format'
             })
         else:
             logger.error("❌ Error sending emails")

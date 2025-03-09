@@ -22,6 +22,13 @@ whitenoise = "^6.8.2"
 python-dotenv = "^1.0.1"
 openpyxl = "^3.1.5"
 weasyprint = "^64.1"
+docx = "^0.2.4"
+python-docx = "^1.1.2"
+docx2pdf = "^0.1.8"
+mammoth = "^1.9.0"
+spire-doc = "^13.1.0"
+spire-xls = "^14.12.0"
+fpdf = "^1.7.2"
 
 
 [build-system]

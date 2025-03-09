@@ -172,3 +172,5 @@ BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INTERNAL_QUOTE_EMAIL: str= 'hector_dominguez@grupoarga.com'
 QUOTE_REPLY_EMAIL: str = os.getenv("QUOTE_REPLY_EMAIL")
 
+ENABLE_PDF_CONVERSION = False
+

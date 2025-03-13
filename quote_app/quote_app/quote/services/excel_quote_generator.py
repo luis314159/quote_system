@@ -1,4 +1,3 @@
-
 import os
 import logging
 import io
@@ -228,46 +227,34 @@ class ExcelQuoteGenerator:
         # Calcular costes para cada componente
         costs_data, total_volume, total_weight, total_cost = self.calculate_component_costs()
         
-        if self.is_internal:
-            # Para uso interno, mostrar todos los detalles
-            self._add_detailed_components(costs_data, start_row)
-            total_row = start_row + len(costs_data) + 1
-        else:
-            # Para el cliente, solo mostrar el total
-            self._add_summary_component(start_row, total_cost)
-            total_row = start_row + 1
+        # Tanto para uso interno como para cliente, mostrar todos los componentes
+        # pero con diferentes niveles de detalle
+        self._add_detailed_components(costs_data, start_row)
+        total_row = start_row + len(costs_data) + 1
         
         # Añadir fila de totales
         self._add_total_row(total_row, total_volume, total_weight, total_cost)
 
     def _add_detailed_components(self, costs_data, start_row):
-        """Añade los componentes detallados para uso interno"""
+        """Añade los componentes detallados"""
         for i, item in enumerate(costs_data):
             row = start_row + i
             
+            # Información básica que se muestra tanto para interno como para cliente
             self.safe_write_cell(f'B{row}', item['component'])
             self.safe_write_cell(f'C{row}', item['material'])
-            self.safe_write_cell(f'D{row}', f"{item['volume']:.2f} in³")
-            self.safe_write_cell(f'E{row}', f"{item['weight']:.2f} lbs")
-            self.safe_write_cell(f'F{row}', f"${item['price_per_pound']:.2f}/lb")
             self.safe_write_cell(f'I{row}', item['quantity'])
-            self.safe_write_cell(f'J{row}', f"${item['unit_cost']:.2f}")
-            self.safe_write_cell(f'K{row}', f"${item['subtotal']:.2f}")
+            
+            # Información detallada de costos solo para uso interno
+            if self.is_internal:
+                self.safe_write_cell(f'D{row}', f"{item['volume']:.2f} in³")
+                self.safe_write_cell(f'E{row}', f"{item['weight']:.2f} lbs")
+                self.safe_write_cell(f'F{row}', f"${item['price_per_pound']:.2f}/lb")
+                self.safe_write_cell(f'J{row}', f"${item['unit_cost']:.2f}")
+                self.safe_write_cell(f'K{row}', f"${item['subtotal']:.2f}")
             
             # Aplicar bordes a todas las celdas de la fila
             self._apply_borders_to_row(row)
-
-    def _add_summary_component(self, start_row, total_cost):
-        """Añade un resumen del proyecto para el cliente"""
-        project_name = self.project_data.get('project_name', 'Project')
-        
-        self.safe_write_cell(f'B{start_row}', project_name)
-        self.safe_write_cell(f'C{start_row}', "Complete Project")
-        self.safe_write_cell(f'I{start_row}', "1")  # Cantidad (siempre 1 proyecto)
-        self.safe_write_cell(f'K{start_row}', f"${total_cost:.2f}")  # Precio total
-        
-        # Aplicar bordes a la fila del proyecto
-        self._apply_borders_to_row(start_row)
 
     def _add_total_row(self, row, total_volume, total_weight, total_cost):
         """Añade la fila de totales"""
@@ -277,8 +264,10 @@ class ExcelQuoteGenerator:
         if self.is_internal:
             self.safe_write_cell(f'D{row}', f"{total_volume:.2f} in³")
             self.safe_write_cell(f'E{row}', f"{total_weight:.2f} lbs")
-        
-        self.safe_write_cell(f'K{row}', f"${total_cost:.2f}")
+            self.safe_write_cell(f'K{row}', f"${total_cost:.2f}")
+        else:
+            # Para el cliente, solo mostrar el total del proyecto
+            self.safe_write_cell(f'K{row}', f"${total_cost:.2f}")
         
         # Aplicar formato a la fila de totales
         self._apply_total_row_format(row)

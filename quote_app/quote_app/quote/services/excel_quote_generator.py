@@ -22,14 +22,14 @@ class ExcelQuoteGenerator:
         # Definir referencias de celdas en un diccionario centralizado
         # Esto facilita ajustar las referencias si el template cambia
         self.cell_refs = {
-            'date': 'J4',           # Desplazado una columna a la derecha
-            'valid_until': 'J5',    # Desplazado una columna a la derecha
+            'date': 'J4',
+            'valid_until': 'J5',
             'quote_number': 'J6',
             'revision': 'J7',
             'project_name': 'C6',
-            'company_name': 'C7',   # Desplazado una columna a la derecha
-            'contact_name': 'C8',   # Desplazado una columna a la derecha
-            'contact_email': 'C9',  # Desplazado una columna a la derecha
+            'company_name': 'C7',
+            'contact_name': 'C8',
+            'contact_email': 'C9',
             'table_header_row': 11,
             'table_start_row': 12,
             'terms_row': 34
@@ -48,6 +48,11 @@ class ExcelQuoteGenerator:
             
             # Verificar si las celdas de referencia existen en el template
             self._validate_template()
+            
+            # Si no es una cotización interna, eliminar las columnas que no necesitamos mostrar al cliente
+            if not is_internal:
+                self._remove_internal_columns()
+                
         except Exception as e:
             logger.error(f"Error loading Excel template: {str(e)}")
             raise
@@ -92,6 +97,74 @@ class ExcelQuoteGenerator:
                     logger.info(f"Reference '{name}' at {ref}: {value}")
                 except (KeyError, AttributeError):
                     logger.warning(f"Reference '{name}' at {ref} not found in template")
+
+    def _remove_internal_columns(self):
+        """Elimina columnas que no son necesarias para la versión del cliente"""
+        logger.info("Removing internal columns for client version")
+        
+        # Primero, desunir (unmerge) las celdas combinadas que cruzan columnas que vamos a eliminar
+        # Por ejemplo, la celda D11 (QTY) que está mergeada hasta H11
+        header_row = self.cell_refs['table_header_row']
+        qty_header_ref = f'D{header_row}'
+        
+        # Buscar y deshacer combinaciones de celdas en la fila de encabezados
+        merged_ranges_to_unmerge = []
+        for merged_range in self.ws.merged_cells.ranges:
+            # Verificar si el rango está en la fila de encabezados
+            if merged_range.min_row == header_row and merged_range.max_row == header_row:
+                # Verificar si el rango cruza alguna de las columnas que queremos eliminar
+                if ((merged_range.min_col <= column_index_from_string('D') <= merged_range.max_col) or
+                    (merged_range.min_col <= column_index_from_string('H') <= merged_range.max_col)):
+                    merged_ranges_to_unmerge.append(str(merged_range))
+                    logger.info(f"Will unmerge range: {merged_range}")
+        
+        # Deshacer las combinaciones encontradas
+        for merged_range in merged_ranges_to_unmerge:
+            try:
+                self.ws.unmerge_cells(merged_range)
+                logger.info(f"Unmerged cells in range: {merged_range}")
+            except Exception as e:
+                logger.error(f"Error unmerging cells in range {merged_range}: {str(e)}")
+        
+        # Columnas a eliminar: D a H y J (de derecha a izquierda para evitar problemas de índices)
+        columns_to_delete = ['J', 'H', 'G', 'F', 'E', 'D']
+        
+        # Actualizar las referencias de celda que podrían verse afectadas por la eliminación
+        column_shift_mapping = {}
+        
+        for col in columns_to_delete:
+            try:
+                col_idx = column_index_from_string(col)
+                self.ws.delete_cols(col_idx)
+                logger.info(f"Deleted column {col}")
+                
+                # Actualizar el mapeo de desplazamiento para celdas que están a la derecha de la columna eliminada
+                for i in range(col_idx, 27):  # 26 letras en el alfabeto
+                    original_col = get_column_letter(i + 1)
+                    new_col = get_column_letter(i)
+                    column_shift_mapping[original_col] = new_col
+            except Exception as e:
+                logger.error(f"Error deleting column {col}: {str(e)}")
+        
+        # Actualizar referencias de celda para reflejar las columnas eliminadas
+        updated_refs = {}
+        for key, cell_ref in self.cell_refs.items():
+            if isinstance(cell_ref, str) and any(c.isalpha() for c in cell_ref):
+                col_letter = ''.join(filter(str.isalpha, cell_ref))
+                row_num = ''.join(filter(str.isdigit, cell_ref))
+                
+                # Si la columna necesita ser actualizada
+                if col_letter in column_shift_mapping:
+                    new_col = column_shift_mapping[col_letter]
+                    updated_refs[key] = f"{new_col}{row_num}"
+                    logger.info(f"Updated cell reference {key}: {cell_ref} -> {updated_refs[key]}")
+                else:
+                    updated_refs[key] = cell_ref
+            else:
+                updated_refs[key] = cell_ref
+        
+        self.cell_refs = updated_refs
+        logger.info("Cell references updated after column deletion")
 
     def _load_materials_and_prices(self):
         """Carga los datos de materiales y precios de la base de datos"""
@@ -203,7 +276,28 @@ class ExcelQuoteGenerator:
     def _format_table_headers(self):
         """Aplica formato a las cabeceras de la tabla"""
         header_row = self.cell_refs['table_header_row']
-        for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
+        
+        # Definir las columnas a formatear basado en si es interno o no
+        if self.is_internal:
+            columns_to_format = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+        else:
+            columns_to_format = ['B', 'C', 'D', 'E']  # Columnas ajustadas después de eliminar D-H, J
+            
+            # Para la versión del cliente, configurar encabezados específicos
+            try:
+                # Establecer encabezado QTY
+                qty_cell = f'D{header_row}'
+                self.ws[qty_cell].value = "QTY"
+                logger.info(f"Set header cell {qty_cell} value to 'QTY'")
+                
+                # Cambiar el encabezado de la columna E para que sea "Total Proyecto" en lugar de mostrar subtotales
+                total_cell = f'E{header_row}'
+                self.ws[total_cell].value = "TOTAL PROYECTO"
+                logger.info(f"Set header cell {total_cell} value to 'TOTAL PROYECTO'")
+            except Exception as e:
+                logger.warning(f"Failed to set client headers: {str(e)}")
+        
+        for col in columns_to_format:
             cell_ref = f'{col}{header_row}'
             try:
                 cell = self.ws[cell_ref]
@@ -240,18 +334,23 @@ class ExcelQuoteGenerator:
         for i, item in enumerate(costs_data):
             row = start_row + i
             
-            # Información básica que se muestra tanto para interno como para cliente
-            self.safe_write_cell(f'B{row}', item['component'])
-            self.safe_write_cell(f'C{row}', item['material'])
-            self.safe_write_cell(f'I{row}', item['quantity'])
-            
-            # Información detallada de costos solo para uso interno
             if self.is_internal:
+                # Información completa para uso interno
+                self.safe_write_cell(f'B{row}', item['component'])
+                self.safe_write_cell(f'C{row}', item['material'])
                 self.safe_write_cell(f'D{row}', f"{item['volume']:.2f} in³")
                 self.safe_write_cell(f'E{row}', f"{item['weight']:.2f} lbs")
                 self.safe_write_cell(f'F{row}', f"${item['price_per_pound']:.2f}/lb")
+                self.safe_write_cell(f'I{row}', item['quantity'])
                 self.safe_write_cell(f'J{row}', f"${item['unit_cost']:.2f}")
                 self.safe_write_cell(f'K{row}', f"${item['subtotal']:.2f}")
+            else:
+                # Información simplificada para cliente (con columnas ya eliminadas)
+                # No mostramos el costo por ítem, solo componente, material y cantidad
+                self.safe_write_cell(f'B{row}', item['component'])
+                self.safe_write_cell(f'C{row}', item['material'])
+                self.safe_write_cell(f'D{row}', item['quantity'])
+                # Dejamos la columna E vacía para los ítems individuales
             
             # Aplicar bordes a todas las celdas de la fila
             self._apply_borders_to_row(row)
@@ -260,21 +359,26 @@ class ExcelQuoteGenerator:
         """Añade la fila de totales"""
         self.safe_write_cell(f'B{row}', "TOTAL")
         
-        # Añadir totales de volumen y peso en caso de vista interna
         if self.is_internal:
+            # Vista interna completa
             self.safe_write_cell(f'D{row}', f"{total_volume:.2f} in³")
             self.safe_write_cell(f'E{row}', f"{total_weight:.2f} lbs")
             self.safe_write_cell(f'K{row}', f"${total_cost:.2f}")
         else:
-            # Para el cliente, solo mostrar el total del proyecto
-            self.safe_write_cell(f'K{row}', f"${total_cost:.2f}")
+            # Para el cliente, solo mostrar el total del proyecto (con columnas ya eliminadas)
+            self.safe_write_cell(f'E{row}', f"${total_cost:.2f}")
         
         # Aplicar formato a la fila de totales
         self._apply_total_row_format(row)
 
     def _apply_borders_to_row(self, row):
         """Aplica bordes a todas las celdas de una fila"""
-        for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
+        if self.is_internal:
+            columns_to_format = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+        else:
+            columns_to_format = ['B', 'C', 'D', 'E']  # Columnas ajustadas después de eliminar D-H, J
+            
+        for col in columns_to_format:
             try:
                 cell = self.ws[f'{col}{row}']
                 cell.border = self.thin_border
@@ -283,7 +387,12 @@ class ExcelQuoteGenerator:
 
     def _apply_total_row_format(self, row):
         """Aplica formato a la fila de totales"""
-        for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
+        if self.is_internal:
+            columns_to_format = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+        else:
+            columns_to_format = ['B', 'C', 'D', 'E']  # Columnas ajustadas después de eliminar D-H, J
+            
+        for col in columns_to_format:
             try:
                 cell = self.ws[f'{col}{row}']
                 cell.font = Font(bold=True)

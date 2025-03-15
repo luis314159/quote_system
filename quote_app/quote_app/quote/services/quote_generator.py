@@ -220,7 +220,7 @@ class QuoteGenerator:
         return costs_data, total_volume, total_weight, total_cost
     
     def _add_customer_components_table(self):
-        """Simplified table for customer view - without unit costs"""
+        """Tabla modificada para mostrar todos los componentes con sus materiales para el customer view"""
         costs_data, _, total_weight, total_cost = self.calculate_component_costs()
         
         items_data = [['Component', 'Material', 'Quantity']]
@@ -236,7 +236,7 @@ class QuoteGenerator:
         items_data.append([
             'TOTALS',
             '',
-            '',
+            f"{sum(item['quantity'] for item in costs_data):,d}"
         ])
 
         components_table = Table(items_data, colWidths=[3*inch, 2.5*inch, 2*inch])

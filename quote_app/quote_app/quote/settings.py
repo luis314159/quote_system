@@ -16,6 +16,6 @@ class Settings:
     MAIL_TLS: bool = os.getenv("MAIL_TLS", "True").lower() in ("true", "1")
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     #INTERNAL_QUOTE_EMAIL: str= os.getenv("INTERNAL_QUOTE_EMAIL")
-    INTERNAL_QUOTE_EMAIL: str = "luis3.14xbox@gmail.com"
+    INTERNAL_QUOTE_EMAIL: str = "arga.quote@gmail.com"
     QUOTE_REPLY_EMAIL: str = os.getenv("QUOTE_REPLY_EMAIL")
 settings = Settings()
